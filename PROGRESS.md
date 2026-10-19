@@ -22,3 +22,12 @@
 - Bayes (sample prior 0.0591 / 1%): has_credential 0.389 / 0.093; generic_greeting 0.708 / 0.280; subject_caps 0.649 / 0.229; has_url 0.041 (URLs less common in phishing).
 - Correlation: Pearson top pair credential_count x body_chars 0.95 is outlier-driven; Spearman top body_chars x n_words 0.97. Spearman matrix also saved in m2.rds.
 - Finding: Enron and Ling are 100% lowercase, so caps_ratio = 0 and subject_caps = 0 there; caps features partly encode source. Control for source in later tests.
+
+## Phase 3: Modules 3-4 (done)
+- Files: analysis/03_correlation_regression.R (rank_difference_rho), analysis/04_distributions.R (simulate_batches, poisson_fit, densest_window, fit_candidates). Outputs m3.rds, m4.rds, figures m3_spearman_heatmap, m3_rho_is_phish, m4_binomial_batches, m4_poisson_n_urls, m4_qq_normal_log_body, m4_qq_exponential_nazario.
+- M3 (phishing vs legit, n 30867): rank-difference rho body_chars x n_words 0.97155 = cor() (tie gap 3e-7). Top rho with is_phish: credential_count 0.60, has_credential 0.57, money 0.56, generic_greeting 0.54; n_urls -0.10.
+- M3 partial: urgency_count vs is_phish 0.238 zero-order Pearson -> 0.371 partial (Spearman 0.402 -> 0.373) given body_chars, n_urls.
+- M3 LPM: R^2 0.577, multiple R 0.759; 37.1% fitted values outside [0, 1]. glm has_html OR 4881 is quasi-separation (1 phishing row); ignore.
+- M4: binomial sims match theory (TV 0.037 at 1%, 0.023 at 10%). Poisson fails: dispersion index legit 241, phish 16, spam 20. log(body_chars) not normal (Shapiro p < 1e-14; phishing skew -1.0).
+- M4 exponential: Nazario densest window 2015-11-02 to 2016-11-01, 276 gaps, rate 0.757/day, CV 1.07, KS p 0.14 (fits). Excluded bogus year-16 date.
+- M4 body_chars fits (kchars, MLE): lognormal wins by AIC and BIC in all 3 classes; Weibull second, gamma last.
