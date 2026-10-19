@@ -2,7 +2,9 @@
 # Every regex is plain ASCII with no lookbehind, so web/features.js can reproduce it exactly.
 
 ws_chars <- "[ \\t\\n\\r\\f\\x0B]"
-url_pattern <- "https?://[^ \\t\\n\\r\\f\\x0B<>\"']+"
+# URL characters are ASCII only (RFC 3986 set), so no line terminators can enter a URL and
+# "." / "$" never need to agree between ICU and JS.
+url_pattern <- "https?://[A-Za-z0-9._~:/?#@!$&()*+,;=%\\[\\]-]+"
 ip_host_pattern <- "^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$"
 subject_caps_pattern <- paste0(
   "(^|[^A-Za-z0-9])[A-Z]{2,}([^A-Za-z0-9]+[A-Z]{2,}){2}(?![A-Za-z0-9])"
@@ -37,11 +39,17 @@ trim_url <- function(urls) {
   stringi::stri_replace_first_regex(urls, "[.,;:!?)\\]]+$", "")
 }
 
+# Host = text before the first / ? #, after the last @, before the first :.
 url_host <- function(urls) {
+  first_match <- function(x, pattern) {
+    out <- stringi::stri_extract_first_regex(x, pattern)
+    out[is.na(out)] <- ""
+    out
+  }
   rest <- stringi::stri_replace_first_regex(urls, "^https?://", "")
-  host <- stringi::stri_replace_first_regex(rest, "[/?#].*$", "")
-  host <- stringi::stri_replace_first_regex(host, "^.*@", "")
-  stringi::stri_replace_first_regex(host, ":.*$", "")
+  host <- first_match(rest, "^[^/?#]*")
+  host <- stringi::stri_replace_first_regex(host, "^(?:[^@]*@)+", "")
+  first_match(host, "^[^:]*")
 }
 
 url_features <- function(lower, shorteners) {

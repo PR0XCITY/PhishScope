@@ -43,6 +43,13 @@ test_that("whole-word matching ignores substrings", {
   expect_identical(f$urgency_count, 2L)
 })
 
+test_that("URL host parsing handles userinfo, ports and non-ASCII stops", {
+  expect_identical(url_host(c("http://u:p@1.2.3.4:8080/x", "https://a@b@bit.ly?q", "http://")),
+                   c("1.2.3.4", "bit.ly", ""))
+  f <- extract_features("", "see HTTP://Bit.ly/xéhttp://t.co, and https://10.0.0.1:80.", lexicon)
+  expect_identical(c(f$n_urls, f$shortener_url, f$ip_url), c(3L, 1L, 1L))
+})
+
 test_that("emails without 2+ letter words keep one row each", {
   f <- extract_features(c("", "a"), c("1 2 !", ""), lexicon)
   expect_identical(nrow(f), 2L)

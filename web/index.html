@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>PhishScope checker</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <h1>PhishScope</h1>
+    <p class="tagline">Can statistics catch a phish? Paste an email and see what the evidence says.</p>
+  </header>
+
+  <main>
+    <form id="email-form" class="card" novalidate>
+      <div class="field">
+        <label for="subject">Subject</label>
+        <input id="subject" name="subject" type="text" maxlength="500" autocomplete="off"
+               spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="body">Email body</label>
+        <textarea id="body" name="body" rows="10" maxlength="20000" spellcheck="false"
+                  aria-describedby="counter"></textarea>
+        <p id="counter" class="counter" aria-live="polite">0 / 20,000 characters</p>
+      </div>
+      <div class="actions">
+        <button id="analyze" type="submit" class="primary" disabled>Analyze</button>
+        <span class="examples-label" id="examples-label">Try an example:</span>
+        <button type="button" class="secondary" data-example="phishy"
+                aria-describedby="examples-label" disabled>Suspicious</button>
+        <button type="button" class="secondary" data-example="normal"
+                aria-describedby="examples-label" disabled>Normal</button>
+      </div>
+      <p id="status" class="status" role="status" aria-live="polite">Loading model...</p>
+    </form>
+
+    <section id="results" class="results" aria-live="polite" hidden></section>
+  </main>
+
+  <footer class="site-footer">
+    <p>An early-warning aid, not a spam filter. Treat the score as a prompt to look closer.</p>
+    <p>Runs fully in your browser: nothing you paste is sent anywhere.</p>
+    <p>Trained on the Kaggle Phishing Email Dataset (Al-Subaiey et al. 2024, arXiv 2405.11619).</p>
+  </footer>
+</body>
+</html>

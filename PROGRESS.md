@@ -48,3 +48,11 @@
 - M7 rules: parallel detect 0.968 predicted vs 0.904 empirical, false alarm 0.217 vs 0.196; series ~0 (at_in_url d 0.006). 16 of 30 rule pairs dependent (Holm), positive phi, so independence overstates "any fires".
 - User: pi 1%, miss 0.254, h 0.00254, R(100) 0.775, R(1000) 0.079, MTTF 394 emails = 7.9 days at 50/day. Availability 90 / (90 + 2) = 0.978 (assumption-based).
 - Note: at_in_url passes the M6 rule only via spam (OR 0.84 phish vs legit); kept per rule, weight near 0. M6 feature selection used all train classes.
+
+## Phase 6: static web demo (done)
+- Files: web/index.html, style.css, features.js (extractFeatures, findHighlights, urlHost), score.js (posterior, likelihoodRatios, validateModel), app.js (buildResults, clampText, init), examples.js; tests/js/parity.test.mjs, ui.test.mjs; .github/workflows/pages.yml (node tests, then deploy web/).
+- Pattern change (R and JS): URL class now ASCII-only RFC 3986 chars `https?://[A-Za-z0-9._~:/?#@!$&()*+,;=%\[\]-]+`; host via `^[^/?#]*`, `^(?:[^@]*@)+`, `^[^:]*` (no `.`/`$`, which differ for U+0085/U+2028 in ICU vs JS). R tests + make_expected.R rerun.
+- Not rerun: data/processed, m1-m7 and web/model.json still use the old URL pattern; differs only for URLs with non-ASCII chars. Rerun run.R data + 07 to refresh.
+- Parity: expected.json now has 4 fixture + 8 hand-written edge cases (Unicode, emoji, U+2028, ports, @, mixed whitespace, HTML); all features exact, scores within 1e-6. Node 25 needs `node --test "tests/js/*.test.mjs"` (dir arg fails). 29 JS tests pass.
+- UI test: fake DOM throws on innerHTML/outerHTML/insertAdjacentHTML; script/img/a input renders as text only; source scan for sinks, inline script/style/handlers, external URLs, exact CSP.
+- Browser check (python http.server): suspicious example 59.7% (dataset prior) vs 10.8% (1% prior); normal 0.4% vs <0.1%. No console/CSP errors, no overflow at 360px, dark mode OK.
