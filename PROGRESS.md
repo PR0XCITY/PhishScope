@@ -39,3 +39,12 @@
 - Holm p < 0.05 and V >= 0.1: has_credential 0.50, generic_greeting 0.46, has_money 0.45, subject_caps 0.39, has_urgency 0.35, at_in_url 0.18 (at_in_url OR phish vs legit 0.84, CI spans 1: its V comes from spam). has_html min expected 0.12, unreliable.
 - ANOVA log body: one-way F 3727, eta^2 0.115; Tukey all pairs differ (phish +0.43 vs legit, spam -0.79). Two-way (CEAS, Enron, Ling, SpamAssasin; legit + spam only) class:source F 1695. Three-way has_html F 0.35 p 0.55, interactions rank-deficient. Levene rejects (SD ratio 1.42).
 - DOE (observational): RBD caps_ratio class F 1.93 p 0.26 (4 blocks, Enron/Ling zero caps). LSD: first of 12 Latin squares with all cells n >= 30 (cyclic one had an empty cell); class F 37.8 p 0.026, error df 2.
+
+## Phase 5: PhishScore + Module 7 (done)
+- Files: R/phishscore.R (fit_phishscore, phishscore_posterior, model_from_json, wilson_ci, classification_metrics, auc_rank, roc_points), R/reliability.R (parallel_prob, series_prob, user_reliability, mttf_emails, availability), analysis/07_phishscore_reliability.R, tests/parity/make_expected.R -> expected.json, test-phishscore.R. Outputs headline.rds, m7.rds, m7_roc, m7_user_reliability; web/model.json v1.0.0.
+- Model: Bernoulli NB on 6 features (has_credential, generic_greeting, has_money, subject_caps, has_urgency, at_in_url), Laplace, train prior 0.1098, threshold 0.5. Posterior on log-odds scale (JS must match).
+- Test (13228, 1452 phish): sens 0.746 [0.723, 0.768], spec 0.969 [0.966, 0.972], precision 0.748 [0.725, 0.770], F1 0.747 [0.731, 0.762] (Wilson; F1 as 2TP / (2TP + FP + FN)). AUC 0.920.
+- Precision at 1% prevalence: deployed 0.196; re-scored with 1% prior 0.492. Cross-corpus Nigerian Fraud sensitivity 0.887 -> 0.473 (drop 0.413), AUC 0.968 -> 0.914.
+- M7 rules: parallel detect 0.968 predicted vs 0.904 empirical, false alarm 0.217 vs 0.196; series ~0 (at_in_url d 0.006). 16 of 30 rule pairs dependent (Holm), positive phi, so independence overstates "any fires".
+- User: pi 1%, miss 0.254, h 0.00254, R(100) 0.775, R(1000) 0.079, MTTF 394 emails = 7.9 days at 50/day. Availability 90 / (90 + 2) = 0.978 (assumption-based).
+- Note: at_in_url passes the M6 rule only via spam (OR 0.84 phish vs legit); kept per rule, weight near 0. M6 feature selection used all train classes.

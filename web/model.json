@@ -1,0 +1,47 @@
+{
+  "version": "1.0.0",
+  "training_date": "2026-10-19",
+  "classes": ["phishing", "legitimate"],
+  "lexicon": {
+    "urgency": ["urgent", "immediately", "suspend", "suspended", "verify", "expire", "expires", "act now", "within 24 hours", "final notice", "limited time", "deadline"],
+    "credential": ["password", "login", "log in", "username", "verify your", "confirm your", "update your", "account", "ssn", "credit card", "pin", "bank"],
+    "money": ["prize", "winner", "lottery", "inheritance", "million", "wire transfer", "western union", "beneficiary", "compensation", "refund"],
+    "generic_greeting": ["dear customer", "dear user", "dear valued", "dear sir", "dear friend", "dear account holder"],
+    "shorteners": ["bit.ly", "tinyurl.com", "goo.gl", "t.co", "ow.ly", "is.gd", "buff.ly"]
+  },
+  "features": ["has_credential", "generic_greeting", "has_money", "subject_caps", "has_urgency", "at_in_url"],
+  "likelihoods": {
+    "has_credential": {
+      "phishing": 0.74188790560472,
+      "legitimate": 0.083839743823005
+    },
+    "generic_greeting": {
+      "phishing": 0.322713864306785,
+      "legitimate": 0.0012736072195335
+    },
+    "has_money": {
+      "phishing": 0.56401179941003,
+      "legitimate": 0.0368254430333685
+    },
+    "subject_caps": {
+      "phishing": 0.264896755162242,
+      "legitimate": 0.0124449619737273
+    },
+    "has_urgency": {
+      "phishing": 0.516519174041298,
+      "legitimate": 0.087187511371493
+    },
+    "at_in_url": {
+      "phishing": 0.00678466076696165,
+      "legitimate": 0.00775080965030385
+    }
+  },
+  "prior": 0.109761233679982,
+  "threshold": 0.5,
+  "smoothing": "Laplace (count + 1) / (n + 2)",
+  "n_train": {
+    "phishing": 3388,
+    "legitimate": 27479
+  },
+  "citation": "Al-Subaiey et al. 2024, arXiv 2405.11619"
+}

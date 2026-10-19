@@ -1,0 +1,107 @@
+{
+  "model_version": "1.0.0",
+  "fixture": "tests/testthat/fixtures/emails.csv",
+  "decimals": 6,
+  "cases": [
+    {
+      "id": "fx_1",
+      "features": {
+        "n_urls": 1,
+        "has_url": 1,
+        "ip_url": 1,
+        "shortener_url": 0,
+        "at_in_url": 0,
+        "urgency_count": 0,
+        "credential_count": 0,
+        "money_count": 0,
+        "has_urgency": 0,
+        "has_credential": 0,
+        "has_money": 0,
+        "generic_greeting": 0,
+        "exclam_count": 1,
+        "caps_ratio": 0.040816,
+        "body_chars": 65,
+        "n_words": 6,
+        "has_html": 1,
+        "subject_caps": 0
+      },
+      "score_dataset_prior": 0.00419,
+      "score_1pct_prior": 0.000345
+    },
+    {
+      "id": "fx_2",
+      "features": {
+        "n_urls": 2,
+        "has_url": 1,
+        "ip_url": 0,
+        "shortener_url": 1,
+        "at_in_url": 1,
+        "urgency_count": 0,
+        "credential_count": 0,
+        "money_count": 0,
+        "has_urgency": 0,
+        "has_credential": 0,
+        "has_money": 0,
+        "generic_greeting": 0,
+        "exclam_count": 0,
+        "caps_ratio": 0.035714,
+        "body_chars": 64,
+        "n_words": 5,
+        "has_html": 0,
+        "subject_caps": 0
+      },
+      "score_dataset_prior": 0.003666,
+      "score_1pct_prior": 0.000301
+    },
+    {
+      "id": "fx_3",
+      "features": {
+        "n_urls": 0,
+        "has_url": 0,
+        "ip_url": 0,
+        "shortener_url": 0,
+        "at_in_url": 0,
+        "urgency_count": 6,
+        "credential_count": 4,
+        "money_count": 0,
+        "has_urgency": 1,
+        "has_credential": 1,
+        "has_money": 0,
+        "generic_greeting": 1,
+        "exclam_count": 1,
+        "caps_ratio": 0.19469,
+        "body_chars": 110,
+        "n_words": 17,
+        "has_html": 0,
+        "subject_caps": 1
+      },
+      "score_dataset_prior": 0.999937,
+      "score_1pct_prior": 0.999228
+    },
+    {
+      "id": "fx_4",
+      "features": {
+        "n_urls": 0,
+        "has_url": 0,
+        "ip_url": 0,
+        "shortener_url": 0,
+        "at_in_url": 0,
+        "urgency_count": 0,
+        "credential_count": 0,
+        "money_count": 0,
+        "has_urgency": 0,
+        "has_credential": 0,
+        "has_money": 0,
+        "generic_greeting": 0,
+        "exclam_count": 0,
+        "caps_ratio": 0.08,
+        "body_chars": 50,
+        "n_words": 11,
+        "has_html": 0,
+        "subject_caps": 0
+      },
+      "score_dataset_prior": 0.00419,
+      "score_1pct_prior": 0.000345
+    }
+  ]
+}
