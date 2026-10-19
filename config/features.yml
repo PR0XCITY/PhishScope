@@ -1,0 +1,53 @@
+# Fixed lexicon. Lowercase; matched as whole words or phrases.
+urgency:
+  - urgent
+  - immediately
+  - suspend
+  - suspended
+  - verify
+  - expire
+  - expires
+  - act now
+  - within 24 hours
+  - final notice
+  - limited time
+  - deadline
+credential:
+  - password
+  - login
+  - log in
+  - username
+  - verify your
+  - confirm your
+  - update your
+  - account
+  - ssn
+  - credit card
+  - pin
+  - bank
+money:
+  - prize
+  - winner
+  - lottery
+  - inheritance
+  - million
+  - wire transfer
+  - western union
+  - beneficiary
+  - compensation
+  - refund
+generic_greeting:
+  - dear customer
+  - dear user
+  - dear valued
+  - dear sir
+  - dear friend
+  - dear account holder
+shorteners:
+  - bit.ly
+  - tinyurl.com
+  - goo.gl
+  - t.co
+  - ow.ly
+  - is.gd
+  - buff.ly

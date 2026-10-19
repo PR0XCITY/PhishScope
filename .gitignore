@@ -1,0 +1,17 @@
+data/*
+!data/raw/
+!data/processed/
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+outputs/
+*.zip
+.env
+.Rhistory
+.RData
+.Rproj.user/
+renv/library
+report/*_files
+report/*.html
+report/*.pdf
