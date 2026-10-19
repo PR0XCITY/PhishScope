@@ -31,3 +31,11 @@
 - M4: binomial sims match theory (TV 0.037 at 1%, 0.023 at 10%). Poisson fails: dispersion index legit 241, phish 16, spam 20. log(body_chars) not normal (Shapiro p < 1e-14; phishing skew -1.0).
 - M4 exponential: Nazario densest window 2015-11-02 to 2016-11-01, 276 gaps, rate 0.757/day, CV 1.07, KS p 0.14 (fits). Excluded bogus year-16 date.
 - M4 body_chars fits (kchars, MLE): lognormal wins by AIC and BIC in all 3 classes; Weibull second, gamma last.
+
+## Phase 4: Modules 5-6 (done)
+- Files: R/tests_print.R (test_result, print_test, tests_to_df, z_one_prop, z_two_prop, z_one_mean, z_two_mean, cohens_h), analysis/05_large_sample_tests.R, analysis/06_small_sample_anova.R, tests/testthat/test-ztests.R (textbook values + prop.test). Outputs m5.rds, m6.rds, m6_anova_residual_qq.png.
+- M5: phishing URL share 0.27, H1 p > 0.5 not supported (z -26.7). Two-prop h: credential 1.49, greeting 1.14, urgency 1.00, has_url -0.23. caps_ratio d 0.43, log body d 0.38, exclam d -0.05. Manual z^2 = prop.test X^2 exactly. Urgency power 1.0; 17 per group for 80%.
+- M6 small n = 20, 500 draws: rejection rate one-sample 0.56, Welch 0.29, F 0.28 (low power). GOF legit n_urls vs Poisson: chi2 78410, df 7, w 1.69, rejected.
+- Holm p < 0.05 and V >= 0.1: has_credential 0.50, generic_greeting 0.46, has_money 0.45, subject_caps 0.39, has_urgency 0.35, at_in_url 0.18 (at_in_url OR phish vs legit 0.84, CI spans 1: its V comes from spam). has_html min expected 0.12, unreliable.
+- ANOVA log body: one-way F 3727, eta^2 0.115; Tukey all pairs differ (phish +0.43 vs legit, spam -0.79). Two-way (CEAS, Enron, Ling, SpamAssasin; legit + spam only) class:source F 1695. Three-way has_html F 0.35 p 0.55, interactions rank-deficient. Levene rejects (SD ratio 1.42).
+- DOE (observational): RBD caps_ratio class F 1.93 p 0.26 (4 blocks, Enron/Ling zero caps). LSD: first of 12 Latin squares with all cells n >= 30 (cyclic one had an empty cell); class F 37.8 p 0.026, error df 2.
