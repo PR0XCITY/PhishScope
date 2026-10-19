@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-xl: 1.25rem;
+  --text-3xl: 1.75rem;
+  --text-5xl: 2.75rem;
+
+  --radius-card: 12px;
+
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-border: var(--c-border);
+  --color-fg: var(--c-text);
+  --color-muted: var(--c-muted);
+  --color-legit: var(--c-legit);
+  --color-spam: var(--c-spam);
+  --color-phish: var(--c-phish);
+  --color-focus: var(--c-focus);
+}
+
+:root {
+  --c-bg: #f7f8fa;
+  --c-surface: #ffffff;
+  --c-surface-2: #f0f2f5;
+  --c-border: #e3e7ed;
+  --c-text: #0b0f14;
+  --c-muted: #5b6673;
+  --c-legit: #0e7a50;
+  --c-spam: #9a5b00;
+  --c-phish: #c62828;
+  --c-focus: #2f5fd0;
+  color-scheme: light;
+}
+
+.dark {
+  --c-bg: #0b0f14;
+  --c-surface: #121821;
+  --c-surface-2: #18202b;
+  --c-border: #1f2a37;
+  --c-text: #e6edf3;
+  --c-muted: #8b98a5;
+  --c-legit: #3ddc97;
+  --c-spam: #ffb020;
+  --c-phish: #ff5c5c;
+  --c-focus: #7aa7ff;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    background: var(--c-bg);
+  }
+
+  body {
+    @apply bg-bg font-sans text-base text-fg antialiased;
+    overflow-x: hidden;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--c-focus) 35%, transparent);
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-card border border-border bg-surface;
+  }
+
+  .num {
+    @apply font-mono tabular-nums;
+  }
+
+  .hero-glow {
+    background: radial-gradient(
+      ellipse 60% 55% at 50% 0%,
+      color-mix(in srgb, var(--c-focus) 16%, transparent),
+      transparent 70%
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

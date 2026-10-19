@@ -113,7 +113,11 @@ web_tests_from_df <- function(df) {
 check_module_json <- function(m) {
   missing <- setdiff(module_keys, names(m))
   if (length(missing) > 0) stop("Module JSON missing keys: ", paste(missing, collapse = ", "))
+  for (field in c("code", "tests", "tables", "charts")) {
+    if (!is.null(names(m[[field]]))) stop(field, " must be an unnamed list (JSON array)")
+  }
   for (ch in m$charts) {
+    if (!is.null(names(ch$series))) stop("Series of ", ch$id, " must be an unnamed list")
     for (s in ch$series) if (nrow(s$points) > max_points) stop("Too many points in ", ch$id)
   }
   invisible(TRUE)

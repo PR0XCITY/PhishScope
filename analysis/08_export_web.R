@@ -150,9 +150,9 @@ build_m2 <- function() {
     ew$web_series(cl, d$k, d$cdf, cl)
   })
   mgf <- m2$mgf_curves
-  mgf_series <- lapply(split(mgf, paste(mgf$class, mgf$model)), function(d) {
+  mgf_series <- unname(lapply(split(mgf, paste(mgf$class, mgf$model)), function(d) {
     ew$web_series(paste(d$class[1], d$model[1]), d$t, d$log_m, d$class[1])
-  })
+  }))
   joint <- m2$joint$phishing
   joint_df <- data.frame(has_url = rownames(joint), as.data.frame.matrix(joint),
                          check.names = FALSE)

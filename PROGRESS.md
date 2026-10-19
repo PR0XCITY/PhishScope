@@ -71,3 +71,11 @@
 - Output web/public/data: m0-m8.json, pipeline.json, meta.json (R 4.6.1, package versions, headline, module summaries). 0.24 MB; consoles capped at 400 lines, guard fails on lines > 300 chars; points <= 500 per series.
 - Frontend rule change (user): web/ is Vite + React + TS + Tailwind; model.json moved to web/public/model.json (07 and make_expected.R updated).
 - Fix found in export: strip_em_dash turned data frames into column lists; now keeps rows, with a test.
+
+## Phase 6B: website (done)
+- web/: Vite 8 + React 18.3 + TS 5.9 strict + Tailwind 4, react-router 7 (hash), Recharts 3, Shiki 4 (core + JS regex engine, R only), framer-motion, lucide, self-hosted IBM Plex; ESLint 10 + Prettier; exact pins + package-lock. react-router 8 needs React 19, so 7.x.
+- src/lib: features.ts, score.ts (posterior, likelihoodTerms, sliderToPrior, verdictFor: suspicious from 5%), data.ts (manual validators, fetch limited to ./model.json and ./data/*.json), theme.tsx, colors.ts, highlight.ts (lazy). Routes: Home, Check, Analysis (lazy), Pipeline. Components incl. Gauge, PrevalenceSlider, BayesFormula, RedFlags, CodePanel, ChartRenderer, Heatmap, TestCard, DataTable.
+- Tests (Vitest, 55): parity 12 cases exact / 1e-6, slider posterior, validators reject malformed JSON, highlighted text renders no HTML, source scan + CSP. Initial JS 124 KB gzip; Analysis chunk 121 KB; Shiki separate.
+- Verified in browser: no horizontal scroll at 360/768/1280/1600 on all routes, both themes, focus outline, slider live (10.8% at 1% -> 92.3% at 50%). Screenshots in docs/screenshots (headless Edge at 1440; at exactly 1280 headless lays out before scrollbar hides).
+- Fixes found: exporter named series list (m2 MGF) became a JSON object, now unname() + guard; scatter/QQ needed YAxis dataKey; charts now sized by own layout measurement, not ResponsiveContainer; grids need grid-cols-1 base to avoid mobile overflow.
+- Open: README live URL and footer GitHub link are placeholders; `#/check?example=phishy|normal` preloads an example.

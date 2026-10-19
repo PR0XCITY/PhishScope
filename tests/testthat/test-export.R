@@ -48,6 +48,8 @@ test_that("module JSON requires every key", {
             takeaway = "x")
   expect_true(check_module_json(m))
   expect_error(check_module_json(m[setdiff(names(m), "takeaway")]), "takeaway")
+  m$charts <- list(list(id = "c", series = list(a = list(points = data.frame(x = 1, y = 1)))))
+  expect_error(check_module_json(m), "unnamed list")
 })
 
 test_that("charts are capped at 500 points per series", {

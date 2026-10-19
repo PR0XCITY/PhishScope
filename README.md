@@ -15,12 +15,17 @@ PhishScore, a naive Bayes model on six statistically selected red flags, evaluat
 
 At a realistic base rate most alerts are false alarms, and sensitivity drops by 0.41 on an unseen corpus, so PhishScope is an early-warning aid, not a spam filter.
 
-## Live demo
+## Live site
 
-**[Open the PhishScope checker](https://YOUR-GITHUB-USERNAME.github.io/PhishScope/)** (published from `web/` by GitHub Pages; replace the link with your Pages URL).
+**[Open PhishScope](https://YOUR-GITHUB-USERNAME.github.io/PhishScope/)** (built from `web/` and published by GitHub Pages; replace the link with your Pages URL).
 
-![PhishScope web demo](docs/screenshot.png)
-*Screenshot placeholder: add `docs/screenshot.png`.*
+| Home | Checker | Analysis explorer |
+|---|---|---|
+| ![Home](docs/screenshots/home.png) | ![Checker with an example](docs/screenshots/checker-example.png) | ![Module 4](docs/screenshots/analysis-module4.png) |
+
+- **Check** scores an email with the same six red flags as R, with a prevalence slider and Bayes rule shown with live numbers.
+- **Analysis** walks through every module: the R code that ran, its console output, charts, hypothesis tests and tables, all exported by R as JSON.
+- **Pipeline** traces row counts from the raw CSVs to your browser.
 
 Everything runs client-side: nothing you paste is sent anywhere.
 
@@ -31,8 +36,10 @@ flowchart LR
   A[Raw Kaggle CSVs] --> B[R features<br/>R/features.R]
   B --> C[Modules 1 to 7<br/>analysis/]
   C --> D[PhishScore<br/>naive Bayes]
-  D --> E[web/model.json]
-  E --> F[Web demo<br/>web/]
+  D --> E[web/public/model.json]
+  C --> W[web/public/data/*.json]
+  E --> F[Website<br/>Vite + React + TS]
+  W --> F
   C --> G[Quarto report<br/>report/report.qmd]
 ```
 
@@ -56,11 +63,13 @@ Requires R 4.6, Quarto and Node 22+. Put the Kaggle CSVs in `data/raw/`, then:
 Rscript -e "renv::restore()"
 Rscript run.R all
 Rscript -e "testthat::test_dir('tests/testthat')"
-node --test "tests/js/*.test.mjs"
-python -m http.server 8000 -d web
+npm --prefix web ci
+npm --prefix web run dev
 ```
 
-`run.R all` builds the data, runs Modules 1 to 7, exports `web/model.json` and renders `report/report.html` and `report/report.pdf`. Run a single stage with `Rscript run.R data | analysis | report`.
+`run.R all` builds the data, runs Modules 1 to 7, exports `web/public/model.json` and renders `report/report.html` and `report/report.pdf`; `Rscript run.R web` exports the analysis explorer data to `web/public/data/`. Run a single stage with `Rscript run.R data | analysis | report | web`.
+
+The site is Vite + React 18 + TypeScript + Tailwind (Recharts, Shiki, framer-motion). In `web/`: `npm run test` (parity with R, validators, UI safety), `npm run lint` (ESLint + Prettier) and `npm run build` (static site in `web/dist/`).
 
 Commits are scanned by a gitleaks pre-commit hook (`pip install pre-commit && pre-commit install`). See [SECURITY.md](SECURITY.md).
 

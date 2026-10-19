@@ -28,18 +28,32 @@ jobs:
         run: testthat::test_dir("tests/testthat", reporter = "summary", stop_on_failure = TRUE)
         shell: Rscript {0}
 
-  js:
+  web:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Node tests
-        run: node --test "tests/js/*.test.mjs"
-      - name: No HTML injection sinks or eval in web/
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: Lint (ESLint + Prettier)
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      - name: Tests (parity with R, UI safety)
+        run: npm run test
+      - name: Build
+        run: npm run build
+      - name: No HTML injection sinks or eval in web source
         run: |
-          if grep -rnE 'innerHTML|outerHTML|insertAdjacentHTML|eval\(' web/; then
+          if grep -rnE --exclude='*.test.*' \
+            'dangerouslySetInnerHTML|innerHTML|outerHTML|insertAdjacentHTML|eval\(' \
+            src index.html; then
             echo "Forbidden API found in web/"
             exit 1
           fi
