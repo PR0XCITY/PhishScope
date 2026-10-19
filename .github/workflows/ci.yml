@@ -43,12 +43,12 @@ jobs:
       - run: npm ci
       - name: Lint (ESLint + Prettier)
         run: npm run lint
-      - name: Type check
-        run: npm run typecheck
       - name: Tests (parity with R, UI safety)
         run: npm run test
-      - name: Build
+      - name: Build (includes tsc --noEmit)
         run: npm run build
+      - name: Dependency audit
+        run: npm audit --audit-level=high
       - name: No HTML injection sinks or eval in web source
         run: |
           if grep -rnE --exclude='*.test.*' \
