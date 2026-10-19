@@ -1,7 +1,8 @@
 # Module 6: small-sample t / F, chi-square GOF and independence, ANOVA, DOE layouts (train set).
 
 library(ggplot2)
-source("R/tests_print.R")
+tp <- new.env()
+sys.source("R/tests_print.R", envir = tp)
 
 set.seed(2026)
 dir.create("outputs/results", showWarnings = FALSE, recursive = TRUE)
@@ -27,18 +28,18 @@ small_tests <- function(n = 20) {
   one <- stats::t.test(x, mu = mu_legit)
   welch <- stats::t.test(x, y)
   ft <- stats::var.test(x, y)
-  one_res <- test_result("One-sample t, phishing log(body_chars), n = 20",
-                         sprintf("mu = %.3f", mu_legit), sprintf("mu != %.3f", mu_legit),
-                         "t", unname(one$statistic), stats::qt(0.975, n - 1), one$p.value,
-                         "Cohen's d", (mean(x) - mu_legit) / stats::sd(x))
-  welch_res <- test_result("Welch t, phishing vs legitimate log(body_chars), n = 20 each",
-                           "mu_phish = mu_legit", "mu_phish != mu_legit", "t",
-                           unname(welch$statistic), stats::qt(0.975, unname(welch$parameter)),
-                           welch$p.value, "Cohen's d", pooled_d(x, y))
-  f_res <- test_result("F test of variances, phishing vs legitimate, n = 20 each",
-                       "var_phish = var_legit", "var_phish != var_legit", "F",
-                       unname(ft$statistic), stats::qf(c(0.025, 0.975), n - 1, n - 1),
-                       ft$p.value, "variance ratio", unname(ft$estimate))
+  one_res <- tp$test_result("One-sample t, phishing log(body_chars), n = 20",
+                            sprintf("mu = %.3f", mu_legit), sprintf("mu != %.3f", mu_legit),
+                            "t", unname(one$statistic), stats::qt(0.975, n - 1), one$p.value,
+                            "Cohen's d", (mean(x) - mu_legit) / stats::sd(x))
+  welch_res <- tp$test_result("Welch t, phishing vs legitimate log(body_chars), n = 20 each",
+                              "mu_phish = mu_legit", "mu_phish != mu_legit", "t",
+                              unname(welch$statistic), stats::qt(0.975, unname(welch$parameter)),
+                              welch$p.value, "Cohen's d", pooled_d(x, y))
+  f_res <- tp$test_result("F test of variances, phishing vs legitimate, n = 20 each",
+                          "var_phish = var_legit", "var_phish != var_legit", "F",
+                          unname(ft$statistic), stats::qf(c(0.025, 0.975), n - 1, n - 1),
+                          ft$p.value, "variance ratio", unname(ft$estimate))
   list(one_sample = one_res, welch = welch_res, f_test = f_res)
 }
 first_draw <- small_tests()
@@ -65,11 +66,11 @@ gof_poisson <- function(x) {
   pooled <- pool_tail(obs, expd)
   chi2 <- sum((pooled$obs - pooled$expd)^2 / pooled$expd)
   df <- length(pooled$obs) - 1 - 1
-  res <- test_result("Chi-square GOF, legitimate n_urls vs Poisson",
-                     sprintf("n_urls ~ Poisson(%.3f)", lambda), "n_urls is not Poisson",
-                     "chi2", chi2, stats::qchisq(0.95, df),
-                     stats::pchisq(chi2, df, lower.tail = FALSE), "Cohen's w",
-                     sqrt(chi2 / length(x)))
+  res <- tp$test_result("Chi-square GOF, legitimate n_urls vs Poisson",
+                        sprintf("n_urls ~ Poisson(%.3f)", lambda), "n_urls is not Poisson",
+                        "chi2", chi2, stats::qchisq(0.95, df),
+                        stats::pchisq(chi2, df, lower.tail = FALSE), "Cohen's w",
+                        sqrt(chi2 / length(x)))
   list(res = res, bins = length(pooled$obs), df = df, lambda = lambda)
 }
 gof <- gof_poisson(train$n_urls[train$class == "legitimate"])
@@ -115,10 +116,10 @@ anova_terms <- function(fit, label, response = "log(body_chars)") {
   df_res <- tab["Residuals", "Df"]
   terms <- setdiff(rownames(tab), "Residuals")
   lapply(stats::setNames(terms, terms), function(term) {
-    test_result(paste0(label, ": ", term), paste("no", term, "effect on mean", response),
-                paste("some", term, "level means differ"), "F", tab[term, "F value"],
-                stats::qf(0.95, tab[term, "Df"], df_res), tab[term, "Pr(>F)"],
-                "partial eta^2", tab[term, "Sum Sq"] / (tab[term, "Sum Sq"] + ss_res))
+    tp$test_result(paste0(label, ": ", term), paste("no", term, "effect on mean", response),
+                   paste("some", term, "level means differ"), "F", tab[term, "F value"],
+                   stats::qf(0.95, tab[term, "Df"], df_res), tab[term, "Pr(>F)"],
+                   "partial eta^2", tab[term, "Sum Sq"] / (tab[term, "Sum Sq"] + ss_res))
   })
 }
 one_way <- stats::aov(log_body ~ class, data = train)
@@ -131,12 +132,12 @@ three_way <- stats::aov(log_body ~ class * source * has_html, data = multi)
 anova_results <- c(anova_terms(one_way, "One-way"), anova_terms(two_way, "Two-way"),
                    anova_terms(three_way, "Three-way"))
 levene <- car::leveneTest(log_body ~ factor(class), data = train)
-levene_res <- test_result("Levene, log(body_chars) by class", "equal variances",
-                          "some variances differ", "F", levene[1, "F value"],
-                          stats::qf(0.95, levene[1, "Df"], levene[2, "Df"]),
-                          levene[1, "Pr(>F)"], "SD ratio max/min",
-                          max(tapply(train$log_body, train$class, stats::sd)) /
-                            min(tapply(train$log_body, train$class, stats::sd)))
+sd_by_class <- tapply(train$log_body, train$class, stats::sd)
+levene_res <- tp$test_result("Levene, log(body_chars) by class", "equal variances",
+                             "some variances differ", "F", levene[1, "F value"],
+                             stats::qf(0.95, levene[1, "Df"], levene[2, "Df"]),
+                             levene[1, "Pr(>F)"], "SD ratio max/min",
+                             max(sd_by_class) / min(sd_by_class))
 resid <- stats::residuals(one_way)
 resid_check <- c(skewness = moments::skewness(resid), kurtosis = moments::kurtosis(resid),
                  shapiro_p_5000 = stats::shapiro.test(sample(resid, 5000))$p.value)
@@ -190,27 +191,27 @@ doe_note <- paste("Observational data arranged in DOE layouts: classes were not 
                   "CRD = the one-way ANOVA above.")
 
 saveRDS(list(
-  small_first_draw = tests_to_df(first_draw), small_rejection_rate = rejection_rate,
-  gof = tests_to_df(list(gof$res)), gof_bins = gof$bins, gof_df = gof$df,
+  small_first_draw = tp$tests_to_df(first_draw), small_rejection_rate = rejection_rate,
+  gof = tp$tests_to_df(list(gof$res)), gof_bins = gof$bins, gof_df = gof$df,
   independence = indep, effect_note = effect_note,
-  anova = tests_to_df(anova_results), levene = tests_to_df(list(levene_res)),
+  anova = tp$tests_to_df(anova_results), levene = tp$tests_to_df(list(levene_res)),
   residual_check = resid_check, tukey = tukey, multi_sources = multi_sources,
-  rbd_data = rbd_data, rbd = tests_to_df(rbd_results),
-  lsd_data = lsd_data, lsd = tests_to_df(lsd_results), doe_note = doe_note,
+  rbd_data = rbd_data, rbd = tp$tests_to_df(rbd_results),
+  lsd_data = lsd_data, lsd = tp$tests_to_df(lsd_results), doe_note = doe_note,
   figures = "outputs/figures/m6_anova_residual_qq.png"
 ), "outputs/results/m6.rds")
 
-invisible(lapply(first_draw, print_test))
+invisible(lapply(first_draw, tp$print_test))
 cat("Rejection rate over 500 draws:", sprintf("%s %.3f", names(rejection_rate), rejection_rate),
     "\n\n")
-print_test(gof$res)
+tp$print_test(gof$res)
 cat("  bins after pooling:", gof$bins, "df:", gof$df, "\n\nIndependence (ranked by V):\n")
 print(indep[, c("feature", "chi2", "cramers_v", "odds_ratio", "or_low", "or_high", "p_holm",
                 "min_expected", "passes")], digits = 3, row.names = FALSE)
 cat(effect_note, "\n\n")
-invisible(lapply(c(anova_results, list(levene_res)), print_test))
+invisible(lapply(c(anova_results, list(levene_res)), tp$print_test))
 cat("Residuals:", sprintf("%s %.3g", names(resid_check), resid_check), "\nTukey HSD:\n")
 print(round(tukey, 4))
 cat("\nRBD sources:", paste(multi_sources, collapse = ", "), "\n")
-invisible(lapply(c(rbd_results, lsd_results), print_test))
+invisible(lapply(c(rbd_results, lsd_results), tp$print_test))
 cat("LSD cell sizes:", paste(lsd_data$n, collapse = ", "), "\n", doe_note, "\n")

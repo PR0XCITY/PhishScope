@@ -68,21 +68,32 @@ clean_emails <- function(df) {
   key <- paste(normalize_text(df$subject), normalize_text(df$body), sep = "\r")
   dup <- duplicated(key)
   message("dropped duplicates: ", sum(dup))
-  df[!dup, , drop = FALSE]
+  out <- df[!dup, , drop = FALSE]
+  attr(out, "dropped") <- c(empty_body = sum(empty), duplicate = sum(dup))
+  out
 }
 
 log_date_rates <- function(df) {
   rate <- tapply(!is.na(df$date), df$source, mean)
   for (s in names(rate)) message(sprintf("date parse rate %s: %.1f%%", s, 100 * rate[[s]]))
+  rate
 }
 
+# Returns the cleaned emails with attr "log": files used, row counts, date parse rates.
 load_emails <- function(dir = "data/raw") {
-  df <- do.call(rbind, lapply(find_source_files(dir), read_source))
-  message("rows loaded: ", nrow(df))
+  files <- find_source_files(dir)
+  df <- do.call(rbind, lapply(files, read_source))
+  n_loaded <- nrow(df)
+  message("rows loaded: ", n_loaded)
   message("dropped missing labels: ", sum(is.na(df$label)))
+  n_missing <- sum(is.na(df$label))
   df <- df[!is.na(df$label), , drop = FALSE]
   df$class <- assign_class(df$label, df$source)
   df$date <- parse_dates(df$date_raw)
-  log_date_rates(df)
-  clean_emails(df)
+  rates <- log_date_rates(df)
+  out <- clean_emails(df)
+  attr(out, "log") <- list(files = basename(files), rows_loaded = n_loaded,
+                           missing_label = n_missing, dropped = attr(out, "dropped"),
+                           date_parse_rate = rates)
+  out
 }

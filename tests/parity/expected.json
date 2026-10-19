@@ -27,8 +27,8 @@
         "has_html": 1,
         "subject_caps": 0
       },
-      "score_dataset_prior": 0.00419,
-      "score_1pct_prior": 0.000345
+      "score_dataset_prior": 0.004188,
+      "score_1pct_prior": 0.000344
     },
     {
       "id": "fx_2",
@@ -54,8 +54,8 @@
         "has_html": 0,
         "subject_caps": 0
       },
-      "score_dataset_prior": 0.003666,
-      "score_1pct_prior": 0.000301
+      "score_dataset_prior": 0.003963,
+      "score_1pct_prior": 0.000326
     },
     {
       "id": "fx_3",
@@ -82,7 +82,7 @@
         "subject_caps": 1
       },
       "score_dataset_prior": 0.999937,
-      "score_1pct_prior": 0.999228
+      "score_1pct_prior": 0.999227
     },
     {
       "id": "fx_4",
@@ -108,8 +108,8 @@
         "has_html": 0,
         "subject_caps": 0
       },
-      "score_dataset_prior": 0.00419,
-      "score_1pct_prior": 0.000345
+      "score_dataset_prior": 0.004188,
+      "score_1pct_prior": 0.000344
     },
     {
       "id": "edge_1",
@@ -135,8 +135,8 @@
         "has_html": 0,
         "subject_caps": 1
       },
-      "score_dataset_prior": 0.973662,
-      "score_1pct_prior": 0.751776
+      "score_dataset_prior": 0.975592,
+      "score_1pct_prior": 0.76606
     },
     {
       "id": "edge_2",
@@ -162,8 +162,8 @@
         "has_html": 0,
         "subject_caps": 1
       },
-      "score_dataset_prior": 0.976891,
-      "score_1pct_prior": 0.775949
+      "score_dataset_prior": 0.976878,
+      "score_1pct_prior": 0.775847
     },
     {
       "id": "edge_3",
@@ -189,8 +189,8 @@
         "has_html": 0,
         "subject_caps": 0
       },
-      "score_dataset_prior": 0.124635,
-      "score_1pct_prior": 0.01153
+      "score_dataset_prior": 0.124571,
+      "score_1pct_prior": 0.011524
     },
     {
       "id": "edge_4",
@@ -216,8 +216,8 @@
         "has_html": 0,
         "subject_caps": 0
       },
-      "score_dataset_prior": 0.00419,
-      "score_1pct_prior": 0.000345
+      "score_dataset_prior": 0.004188,
+      "score_1pct_prior": 0.000344
     },
     {
       "id": "edge_5",
@@ -243,8 +243,8 @@
         "has_html": 0,
         "subject_caps": 0
       },
-      "score_dataset_prior": 0.611245,
-      "score_1pct_prior": 0.114114
+      "score_dataset_prior": 0.611105,
+      "score_1pct_prior": 0.114055
     },
     {
       "id": "edge_6",
@@ -270,8 +270,8 @@
         "has_html": 0,
         "subject_caps": 1
       },
-      "score_dataset_prior": 0.978513,
-      "score_1pct_prior": 0.788621
+      "score_dataset_prior": 0.9785,
+      "score_1pct_prior": 0.788523
     },
     {
       "id": "edge_7",
@@ -297,8 +297,8 @@
         "has_html": 1,
         "subject_caps": 0
       },
-      "score_dataset_prior": 0.00419,
-      "score_1pct_prior": 0.000345
+      "score_dataset_prior": 0.004188,
+      "score_1pct_prior": 0.000344
     },
     {
       "id": "edge_8",
@@ -324,8 +324,8 @@
         "has_html": 0,
         "subject_caps": 0
       },
-      "score_dataset_prior": 0.611245,
-      "score_1pct_prior": 0.114114
+      "score_dataset_prior": 0.611105,
+      "score_1pct_prior": 0.114055
     }
   ]
 }

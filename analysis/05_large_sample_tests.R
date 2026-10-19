@@ -1,6 +1,7 @@
 # Module 5: large-sample Z tests with manual formulas, cross-checked against prop.test / t.test.
 
-source("R/tests_print.R")
+tp <- new.env()
+sys.source("R/tests_print.R", envir = tp)
 
 set.seed(2026)
 dir.create("outputs/results", showWarnings = FALSE, recursive = TRUE)
@@ -14,7 +15,7 @@ checks <- list()
 
 # Single proportion: share of phishing with at least one URL.
 x_url <- sum(phish$n_urls >= 1)
-results$url_share <- z_one_prop(
+results$url_share <- tp$z_one_prop(
   x_url, nrow(phish), 0.5, alternative = "greater",
   name = "Phishing share with 1+ URL", h0 = "p = 0.5", h1 = "p > 0.5"
 )
@@ -26,7 +27,7 @@ checks$url_share <- c(manual = results$url_share$statistic^2,
 for (f in c("has_url", "has_urgency", "has_credential", "generic_greeting")) {
   x1 <- sum(phish[[f]])
   x2 <- sum(legit[[f]])
-  results[[f]] <- z_two_prop(
+  results[[f]] <- tp$z_two_prop(
     x1, nrow(phish), x2, nrow(legit),
     name = paste0("P(", f, ") phishing vs legitimate"),
     h0 = "p_phish = p_legit", h1 = "p_phish != p_legit"
@@ -38,7 +39,7 @@ for (f in c("has_url", "has_urgency", "has_credential", "generic_greeting")) {
 
 # Single mean: phishing caps_ratio against the legitimate mean as the reference value.
 mu_ref <- mean(legit$caps_ratio)
-results$caps_ratio <- z_one_mean(
+results$caps_ratio <- tp$z_one_mean(
   mean(phish$caps_ratio), stats::sd(phish$caps_ratio), nrow(phish), mu_ref,
   name = "Mean caps_ratio of phishing vs legitimate reference",
   h0 = sprintf("mu_phish = %.4f", mu_ref), h1 = sprintf("mu_phish != %.4f", mu_ref)
@@ -46,9 +47,9 @@ results$caps_ratio <- z_one_mean(
 
 # Difference of means, phishing vs legitimate.
 two_mean <- function(x, y, label) {
-  res <- z_two_mean(mean(x), stats::sd(x), length(x), mean(y), stats::sd(y), length(y),
-                    name = paste("Mean", label, "phishing vs legitimate"),
-                    h0 = "mu_phish = mu_legit", h1 = "mu_phish != mu_legit")
+  res <- tp$z_two_mean(mean(x), stats::sd(x), length(x), mean(y), stats::sd(y), length(y),
+                       name = paste("Mean", label, "phishing vs legitimate"),
+                       h0 = "mu_phish = mu_legit", h1 = "mu_phish != mu_legit")
   tt <- stats::t.test(x, y)
   list(res = res, check = c(manual = res$statistic, builtin = unname(tt$statistic),
                             builtin_p = tt$p.value))
@@ -74,13 +75,28 @@ error_note <- paste(
   "(1 - beta) is the chance of catching it."
 )
 
-saveRDS(list(tests = tests_to_df(results), results = results, checks = checks,
+# Effect sizes of the phishing vs legitimate tests (Cohen's h or d).
+effects <- tp$tests_to_df(results[names(results) != "url_share"])
+effects$label <- factor(names(results)[names(results) != "url_share"],
+                        rev(names(results)[names(results) != "url_share"]))
+effect_plot <- ggplot2::ggplot(effects, ggplot2::aes(x = .data$effect, y = .data$label,
+                                                     fill = .data$effect_name)) +
+  ggplot2::geom_col() +
+  ggplot2::geom_vline(xintercept = c(-0.2, 0.2, 0.5, 0.8), linetype = "dotted", colour = "grey50") +
+  ggplot2::labs(x = "effect size (dotted: 0.2 small, 0.5 medium, 0.8 large)", y = NULL,
+                fill = NULL, title = "Phishing vs legitimate: effect sizes of Z tests") +
+  ggplot2::theme_minimal()
+dir.create("outputs/figures", showWarnings = FALSE, recursive = TRUE)
+fig_effects <- "outputs/figures/m5_effect_sizes.png"
+ggplot2::ggsave(fig_effects, effect_plot, width = 7, height = 4, dpi = 120)
+
+saveRDS(list(tests = tp$tests_to_df(results), results = results, checks = checks,
              power = c(p_phish = p_ph, p_legit = p_lg, power_at_n = power_at_n,
                        n_per_group_80 = n_for_80, n_per_group_80_1pt = small_effect_n),
-             error_note = error_note),
+             error_note = error_note, figures = fig_effects),
         "outputs/results/m5.rds")
 
-invisible(lapply(results, print_test))
+invisible(lapply(results, tp$print_test))
 cat("\nCross-checks (manual z^2 vs prop.test X^2; manual z vs Welch t):\n")
 print(round(do.call(rbind, lapply(checks, function(x) x[1:2])), 4))
 cat(sprintf(paste("\nPower (has_urgency, p %.3f vs %.3f): %.4f at n = %d per group;",

@@ -56,3 +56,11 @@
 - Parity: expected.json now has 4 fixture + 8 hand-written edge cases (Unicode, emoji, U+2028, ports, @, mixed whitespace, HTML); all features exact, scores within 1e-6. Node 25 needs `node --test "tests/js/*.test.mjs"` (dir arg fails). 29 JS tests pass.
 - UI test: fake DOM throws on innerHTML/outerHTML/insertAdjacentHTML; script/img/a input renders as text only; source scan for sinks, inline script/style/handlers, external URLs, exact CSP.
 - Browser check (python http.server): suspicious example 59.7% (dataset prior) vs 10.8% (1% prior); normal 0.4% vs <0.1%. No console/CSP errors, no overflow at 360px, dark mode OK.
+
+## Phase 7: report, README, CI (done)
+- Files: report/report.qmd (HTML + typst PDF, reads outputs/results/*.rds only, copies figures to report/_fig), .github/workflows/ci.yml (R lint + testthat via renv, node tests + sink grep, gitleaks), .github/dependabot.yml, SECURITY.md, README.md. run.R: report (Quarto via QUARTO_PATH, PATH or %LOCALAPPDATA%/Programs/Quarto) and all.
+- run.R analysis runs 01-07 then tests/parity/make_expected.R. 00_data.R now saves m0.rds (load counts); 05 adds m5_effect_sizes.png. 05/06 load helpers via tp <- new.env() + sys.source (lintr object_usage).
+- run.R all completed: same counts; model refit with new URL pattern changed only at_in_url legit likelihood (0.00775 -> 0.00717); AUC 0.9199 -> 0.9198, other headline metrics unchanged.
+- Added rmarkdown + knitr to renv. Quarto 1.10.19 installed portable (winget had no user-scope installer).
+- Checks: R tests, 29 node tests, lintr clean, renv consistent; gitleaks detect clean; 0 of 58616 dataset body snippets found in tracked files; web demo scores both examples.
+- Open: README live demo URL and screenshot are placeholders (no git remote yet).

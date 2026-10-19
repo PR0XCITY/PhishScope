@@ -1,0 +1,296 @@
+---
+title: "PhishScope: Can Statistics Catch a Phish?"
+subtitle: "Probability and Statistics, Modules 1 to 7, applied to phishing email detection"
+date: today
+format:
+  html:
+    toc: true
+    embed-resources: true
+    fig-width: 7
+  typst:
+    toc: true
+    papersize: a4
+    margin:
+      x: 2cm
+      y: 2cm
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+res_dir <- file.path("..", "outputs", "results")
+load_res <- function(name) readRDS(file.path(res_dir, paste0(name, ".rds")))
+m0 <- load_res("m0")
+m1 <- load_res("m1")
+m2 <- load_res("m2")
+m3 <- load_res("m3")
+m4 <- load_res("m4")
+m5 <- load_res("m5")
+m6 <- load_res("m6")
+m7 <- load_res("m7")
+hl <- load_res("headline")
+
+# Typst can only read files under the report folder, so figures are copied next to it.
+fig_dir <- "_fig"
+dir.create(fig_dir, showWarnings = FALSE)
+fig <- function(name) {
+  src <- file.path("..", "outputs", "figures", name)
+  dst <- file.path(fig_dir, name)
+  file.copy(src, dst, overwrite = TRUE)
+  knitr::include_graphics(dst)
+}
+pct <- function(x, d = 1) sprintf(paste0("%.", d, "f%%"), 100 * x)
+num <- function(x, d = 3) formatC(x, digits = d, format = "f", big.mark = ",")
+int <- function(x) formatC(x, format = "d", big.mark = ",")
+pval <- function(p) ifelse(p < 1e-4, "< 0.0001", sprintf("%.4f", p))
+tbl <- function(df, ...) knitr::kable(df, format = "pipe", row.names = FALSE, ...)
+ci <- function(row) {
+  sprintf("%s [%s, %s]", num(hl$metrics[row, "estimate"]), num(hl$metrics[row, "lower"]),
+          num(hl$metrics[row, "upper"]))
+}
+n_class <- colSums(m0$class_source)
+```
+
+# Abstract
+
+PhishScope asks how far classical probability and statistics can go in separating phishing
+emails from legitimate mail. Using `r int(m0$rows_kept)` deduplicated emails from six public
+corpora, we extract 18 transparent features and apply Modules 1 to 7 of the course. A naive
+Bayes model built only from features that pass a Holm-corrected chi-square test with
+Cramer's V of at least 0.1 (PhishScore) reaches sensitivity `r ci("sensitivity")`, specificity
+`r ci("specificity")` and AUC `r num(hl$auc)` on a held-out test set (Wilson 95% intervals).
+At a realistic 1% phishing prevalence, precision falls to `r num(hl$precision_1pct_deployed)`,
+and sensitivity on an unseen corpus drops by `r num(hl$sensitivity_drop)`, so the score is an
+early-warning aid, not a filter.
+
+# Problem
+
+Phishing emails try to steal credentials or money by imitating trusted senders. Most filters
+are opaque machine learning models. This project asks a narrower question: which simple,
+countable signals differ between phishing and legitimate mail, how strong are those
+differences, and how reliable would a transparent rule-based score be in practice?
+
+# Data
+
+The data is the Kaggle Phishing Email Dataset (Al-Subaiey et al. 2024), which bundles six
+corpora. The combined file was skipped because it duplicates the per-source files. Classes:
+legitimate is label 0; phishing is label 1 from Nazario or Nigerian Fraud; every other label 1
+email is spam. Of `r int(m0$rows_loaded)` rows, `r int(m0$dropped[["empty_body"]])` with empty
+bodies and `r int(m0$dropped[["duplicate"]])` duplicates (same lowercase subject and body after
+collapsing whitespace) were removed. A 70/30 split stratified by class and source gives the
+train and test sets; all analysis below uses the training set unless stated.
+
+```{r data-table}
+cs <- as.data.frame.matrix(m0$class_source)
+cs <- data.frame(source = rownames(cs), cs, check.names = FALSE)
+tbl(cs, caption = "Emails by source and class after cleaning")
+```
+
+Totals: `r int(n_class[["legitimate"]])` legitimate, `r int(n_class[["phishing"]])` phishing
+and `r int(n_class[["spam"]])` spam. Phishing comes from only two sources, so source and class
+are partly confounded, and Enron and Ling are entirely lowercase.
+
+# Feature extraction
+
+Each email becomes 18 numbers computed from subject and body with plain ASCII regular
+expressions, so the same code runs in R and in the browser. Lexicon counts (urgency,
+credential, money words, generic greetings) use whole-word matching against a fixed list in
+`config/features.yml`. URL features count links and flag bare IP hosts, shorteners and `@`
+inside links. Style features are exclamation marks, the uppercase share of letters, body
+length, word count, HTML tags and runs of all-caps words in the subject.
+
+# Module 1: Descriptive statistics
+
+```{r m1}
+s <- m1$stats[, c("feature", "class", "mean", "median", "sd", "cv", "skewness")]
+s[, 3:7] <- lapply(s[, 3:7], signif, 3)
+tbl(s, caption = "Location, spread and shape by class (training set)")
+```
+
+```{r m1-fig, fig.cap = "Body length by class (log1p scale)"}
+fig("m1_box_body_chars.png")
+```
+
+All four features are strongly right-skewed in every class, so medians describe them better
+than means. Phishing emails are longer (median `r int(s$median[s$feature == "body_chars" & s$class == "phishing"])`
+characters) and use more capitals than legitimate mail. Spam is shortest and uses the most
+exclamation marks.
+
+# Module 2: Random variables and Bayes
+
+```{r m2}
+b <- m2$bayes[, c("feature", "p_f_phish", "p_f_not_phish", "post_sample", "post_1pct")]
+b[, 2:5] <- lapply(b[, 2:5], round, 4)
+names(b) <- c("feature", "P(f | phish)", "P(f | not phish)", "P(phish | f), sample",
+              "P(phish | f), 1%")
+tbl(b, caption = "Conditional probabilities and Bayes posteriors")
+```
+
+```{r m2-fig, fig.cap = "PMF of n_urls by class (10+ pooled)"}
+fig("m2_pmf_n_urls.png")
+```
+
+A generic greeting raises the chance of phishing from `r pct(m2$prior_sample)` to
+`r pct(b[[4]][b$feature == "generic_greeting"])` in the sample, but only to
+`r pct(b[[5]][b$feature == "generic_greeting"])` at 1% prevalence. Worked example:
+`r m2$worked[["one_pct"]]`. The number of URLs has variance far above its mean, and the
+moments recovered from the numerical MGF derivatives match the direct ones.
+
+# Module 3: Correlation and regression
+
+```{r m3}
+lc <- m3$lpm_coef
+lc[, -1] <- lapply(lc[, -1], signif, 3)
+tbl(lc, caption = "Linear probability model (phishing vs legitimate) with logistic comparison")
+```
+
+```{r m3-fig, fig.cap = "Spearman correlation of each feature with phishing"}
+fig("m3_rho_is_phish.png")
+```
+
+Credential and money words have the strongest rank correlation with phishing. The
+rank-difference formula gives `r num(as.numeric(m3$rank_formula[["formula"]]), 5)` against
+`r num(as.numeric(m3$rank_formula[["cor"]]), 5)` from `cor()`. The linear probability model
+explains R squared = `r num(m3$r_squared)` (multiple R `r num(m3$multiple_r)`), but
+`r pct(m3$out_of_range)` of its fitted values fall outside [0, 1], which is why the logistic
+fit is shown beside it.
+
+# Module 4: Probability distributions
+
+```{r m4}
+f4 <- m4$fits
+f4$aic <- round(f4$aic, 1)
+f4$bic <- round(f4$bic, 1)
+tbl(f4[, c("class", "distribution", "aic", "bic", "winner")],
+    caption = "Gamma, Weibull and lognormal fits to body length (thousands of characters)")
+```
+
+```{r m4-fig, fig.cap = "n_urls observed vs Poisson"}
+fig("m4_poisson_n_urls.png")
+```
+
+The lognormal wins on both AIC and BIC in every class. The Poisson model fails for link counts
+(dispersion index up to `r num(max(m4$poisson$dispersion_index), 0)`), and log body length is
+not normal (Shapiro p < 0.0001). Simulated batches of 50 emails follow the binomial closely,
+and Nazario inter-arrival times in the densest year fit an exponential with rate
+`r num(m4$exponential$rate_per_day)` per day (KS p = `r num(m4$exponential$ks$p.value)`).
+
+# Module 5: Large-sample tests
+
+```{r m5}
+t5 <- m5$tests[, c("name", "statistic", "critical", "p_value", "decision", "effect_name",
+                   "effect")]
+t5$statistic <- round(t5$statistic, 2)
+t5$p_value <- pval(t5$p_value)
+t5$effect <- round(t5$effect, 3)
+tbl(t5, caption = "Z tests, alpha = 0.05")
+```
+
+```{r m5-fig, fig.cap = "Effect sizes of the phishing vs legitimate Z tests"}
+fig("m5_effect_sizes.png")
+```
+
+With thousands of emails per class almost every test rejects, so effect sizes carry the
+message: credential words, generic greetings and urgency words have large effects, while
+exclamation marks differ only trivially. `r m5$error_note`
+
+# Module 6: Small samples, chi-square and ANOVA
+
+```{r m6}
+ind <- m6$independence[, c("feature", "chi2", "cramers_v", "odds_ratio", "or_low", "or_high",
+                           "p_holm", "passes")]
+ind$chi2 <- round(ind$chi2, 1)
+ind[, 3:6] <- lapply(ind[, 3:6], signif, 3)
+ind$p_holm <- pval(ind$p_holm)
+tbl(ind, caption = "Binary feature x class independence, ranked by Cramer's V")
+```
+
+```{r m6-fig, fig.cap = "One-way ANOVA residuals, QQ plot"}
+fig("m6_anova_residual_qq.png")
+```
+
+Six features pass Holm p < 0.05 with V of at least 0.1 and feed PhishScore. With n = 20 per
+class, the Welch t test detected the body length difference in only
+`r pct(m6$small_rejection_rate[["welch"]], 0)` of 500 draws. One-way ANOVA on log body length
+rejects equal means (partial eta squared `r num(m6$anova$effect[1])`); Levene rejects equal
+variances, so the F test is approximate. `r m6$doe_note`
+
+# Module 7: Reliability
+
+```{r m7}
+sr <- m7$system_rates
+sr[, -1] <- lapply(sr[, -1], signif, 3)
+tbl(sr, caption = "Rules as components: independence prediction vs observed (test set)")
+```
+
+```{r m7-fig, fig.cap = "Probability that a user sees no missed phish"}
+fig("m7_user_reliability.png")
+```
+
+Treating each rule as a component, independence overstates the chance that any rule fires,
+because rules tend to fire together. For a user whose mail is 1% phishing, a missed phish
+arrives about every `r int(round(m7$user_level[["mttf_emails"]]))` emails, or every
+`r num(m7$user_level[["mttf_days"]], 1)` days at 50 emails a day. Under an assumed 90-day
+refresh with 2 degraded days, availability is `r num(m7$availability[["availability"]])`.
+
+# PhishScore validation
+
+```{r validation}
+mt <- data.frame(metric = rownames(hl$metrics), estimate = num(hl$metrics[, "estimate"]),
+                 lower = num(hl$metrics[, "lower"]), upper = num(hl$metrics[, "upper"]))
+tbl(mt, caption = "Test set, threshold 0.5, Wilson 95% intervals")
+cc <- hl$cross_corpus
+cc[, -1] <- lapply(cc[, -1], round, 3)
+tbl(cc, caption = "Nigerian Fraud vs test legitimate, with and without Nigerian Fraud in training")
+```
+
+```{r roc-fig, fig.cap = "ROC curve on the test set"}
+fig("m7_roc.png")
+```
+
+PhishScore uses `r length(hl$features)` binary features with Laplace-smoothed likelihoods and
+a training prior of `r pct(hl$prior)`. On the test set it reaches AUC `r num(hl$auc)`. At 1%
+prevalence the same operating point gives precision `r num(hl$precision_1pct_deployed)`;
+re-scoring with a 1% prior raises it to `r num(hl$precision_1pct_prior)` at the cost of
+sensitivity. Trained without Nigerian Fraud, sensitivity on that corpus falls from
+`r num(cc$sensitivity[1])` to `r num(cc$sensitivity[2])`.
+
+# Web demo
+
+A static page (`web/`) runs the same feature extraction and PhishScore in the browser from
+`web/model.json`. It shows the score at the dataset prior and at a 1% prior, a red-flag table
+with likelihood ratios and the matched words. Nothing is sent to a server, and a parity test
+checks that the JavaScript features and scores match R to six decimals.
+
+*Screenshot placeholder: web demo with the suspicious example.*
+
+# Limitations
+
+- **Corpus age and confounding.** Several corpora are decades old, and phishing comes from
+  only two sources, so some features partly identify the source rather than the class.
+- **Lexicon features.** A fixed English word list misses paraphrases, other languages and
+  image-based phishing, and attackers can avoid it once it is known.
+- **Naive Bayes independence.** Rules are positively dependent, so the model double-counts
+  correlated evidence and its probabilities are overconfident.
+- **Observational DOE.** The block and Latin square layouts arrange existing emails; nothing
+  was randomly assigned.
+- **Association, not causation.** Every result describes how features co-occur with labels in
+  this dataset, not why emails are phishing.
+
+# Conclusion
+
+A handful of countable signals, mainly credential words, generic greetings, money words and
+urgency, separate phishing from legitimate mail with large effect sizes, and a transparent
+naive Bayes score built from them reaches an AUC of `r num(hl$auc)`. The base rate dominates
+in practice: at 1% prevalence most alerts are false alarms, and performance drops on an unseen
+corpus. PhishScope is best used as an explainable early-warning aid.
+
+# References
+
+- Al-Subaiey, A. et al. (2024). Novel interpretable and robust web-based AI platform for
+  phishing email detection. arXiv:2405.11619. Dataset: Kaggle "Phishing Email Dataset".
+- R Core Team (2026). R: A language and environment for statistical computing. R Foundation
+  for Statistical Computing, Vienna.
+- Allaire, J. J. et al. Quarto. <https://quarto.org>.

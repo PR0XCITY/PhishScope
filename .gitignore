@@ -15,3 +15,5 @@ renv/library
 report/*_files
 report/*.html
 report/*.pdf
+report/_fig/
+report/.quarto/

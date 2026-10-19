@@ -15,6 +15,13 @@ dir.create("data/processed", showWarnings = FALSE, recursive = TRUE)
 arrow::write_parquet(processed, "data/processed/emails.parquet")
 arrow::write_parquet(emails[, c("id", "subject", "body")], "data/processed/text.parquet")
 
+# Counts only (no text) for the report.
+dir.create("outputs/results", showWarnings = FALSE, recursive = TRUE)
+saveRDS(c(attr(emails, "log"), list(
+  rows_kept = nrow(processed), class_source = table(processed$source, processed$class),
+  set_class = table(processed$class, processed$set)
+)), "outputs/results/m0.rds")
+
 cat("\nRows by class x source:\n")
 print(table(processed$source, processed$class))
 cat("\nRows by set:\n")
