@@ -17,7 +17,7 @@ At a realistic base rate most alerts are false alarms, and sensitivity drops by 
 
 ## Live site
 
-**[Open PhishScope](https://YOUR-GITHUB-USERNAME.github.io/PhishScope/)** (built from `web/` and published by GitHub Pages; replace the link with your Pages URL).
+**[Open PhishScope](https://pr0xcity.github.io/PhishScope/)** (built from `web/` and published by GitHub Pages). Source: [github.com/PR0XCITY/PhishScope](https://github.com/PR0XCITY/PhishScope).
 
 | Home | Checker | Analysis explorer |
 |---|---|---|

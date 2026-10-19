@@ -107,7 +107,7 @@ export function Layout() {
           <p>
             An early-warning aid, not a spam filter.{" "}
             <a
-              href="https://github.com/YOUR-GITHUB-USERNAME/PhishScope"
+              href="https://github.com/PR0XCITY/PhishScope"
               rel="noopener noreferrer"
               className="text-focus underline-offset-4 hover:underline"
             >
