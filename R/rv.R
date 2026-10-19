@@ -7,6 +7,7 @@ stat_mode <- function(x) {
   as.numeric(names(counts)[which.max(counts)])
 }
 
+# @web-start Descriptive summary of one variable
 describe <- function(x) {
   x <- x[!is.na(x)]
   q <- stats::quantile(x, c(0.25, 0.5, 0.75), names = FALSE)
@@ -19,6 +20,7 @@ describe <- function(x) {
     skewness = moments::skewness(x), kurtosis = moments::kurtosis(x)
   )
 }
+# @web-end
 
 # describe() for every feature x class, long format.
 describe_by_class <- function(df, features, class_col = "class") {
@@ -32,6 +34,7 @@ describe_by_class <- function(df, features, class_col = "class") {
   do.call(rbind, rows)
 }
 
+# @web-start PMF and CDF of a count variable
 # PMF and CDF of a count variable, values >= cap pooled into "cap+".
 pmf_capped <- function(x, cap = 10) {
   k <- pmin(x, cap)
@@ -41,6 +44,7 @@ pmf_capped <- function(x, cap = 10) {
     k = 0:cap, pmf = p, cdf = cumsum(p)
   )
 }
+# @web-end
 
 rv_moments <- function(x) {
   m <- mean(x)
@@ -53,11 +57,13 @@ joint_pmf <- function(a, b, a_name = "a", b_name = "b") {
   stats::addmargins(tab)
 }
 
+# @web-start Bayes rule
 # P(C | F) = P(F | C) P(C) / [P(F | C) P(C) + P(F | not C) (1 - P(C))]
 bayes_posterior <- function(p_f_given_c, p_f_given_not_c, prior) {
   num <- p_f_given_c * prior
   num / (num + p_f_given_not_c * (1 - prior))
 }
+# @web-end
 
 bayes_worked <- function(p_f_given_c, p_f_given_not_c, prior, feature = "F", cls = "C") {
   post <- bayes_posterior(p_f_given_c, p_f_given_not_c, prior)
@@ -68,6 +74,7 @@ bayes_worked <- function(p_f_given_c, p_f_given_not_c, prior, feature = "F", cls
   )
 }
 
+# @web-start Moment generating function and its derivatives
 # log M(t) via log-sum-exp so heavy tails do not overflow.
 log_empirical_mgf <- function(x, t) {
   vapply(t, function(ti) {
@@ -88,3 +95,4 @@ mgf_moments <- function(log_mgf, h = 1e-4) {
   d2 <- (m[3] - 2 * m[2] + m[1]) / h^2
   c(mean = d1, var = d2 - d1^2)
 }
+# @web-end

@@ -17,3 +17,5 @@ report/*.html
 report/*.pdf
 report/_fig/
 report/.quarto/
+web/node_modules/
+web/dist/

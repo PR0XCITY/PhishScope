@@ -16,6 +16,7 @@ save_fig <- function(name, plot, width = 7, height = 4) {
   path
 }
 
+# @web-start Binomial batches: theory vs simulation
 # Binomial: batches of 50 drawn from phishing + legitimate, reweighted to prevalence p.
 simulate_batches <- function(p, n_batch = 50, n_sim = 2000) {
   pool <- train$class[train$class %in% c("phishing", "legitimate")]
@@ -28,6 +29,7 @@ simulate_batches <- function(p, n_batch = 50, n_sim = 2000) {
              sim_mean = mean(k_sim), sim_var = stats::var(k_sim))
 }
 binom <- rbind(simulate_batches(0.01), simulate_batches(0.10))
+# @web-end
 binom_summary <- do.call(rbind, lapply(split(binom, binom$p), function(b) {
   data.frame(p = b$p[1], theory_mean = 50 * b$p[1], sim_mean = b$sim_mean[1],
              theory_var = 50 * b$p[1] * (1 - b$p[1]), sim_var = b$sim_var[1],
@@ -45,6 +47,7 @@ binom_plot <- ggplot(binom_long, aes(x = .data$k, y = .data$prob, fill = .data$s
   theme_minimal()
 fig_binom <- save_fig("m4_binomial_batches.png", binom_plot, width = 8)
 
+# @web-start Poisson fit and dispersion index
 # Poisson: n_urls by class, lambda = mean, observed vs expected counts 0..9 and 10+.
 poisson_fit <- function(x, cap = 10) {
   lambda <- mean(x)
@@ -57,6 +60,7 @@ poisson_fit <- function(x, cap = 10) {
 pois <- lapply(stats::setNames(classes, classes), function(cl) {
   poisson_fit(train$n_urls[train$class == cl])
 })
+# @web-end
 pois_long <- do.call(rbind, lapply(classes, function(cl) {
   t <- pois[[cl]]$table
   rbind(data.frame(class = cl, k = t$k, kind = "observed", prob = t$observed),
@@ -76,6 +80,7 @@ pois_summary <- data.frame(class = classes,
                            p0_observed = sapply(pois, function(p) p$table$observed[1]),
                            p0_poisson = sapply(pois, function(p) p$table$expected[1]))
 
+# @web-start Normality of log(body_chars), Shapiro-Wilk
 # Normal: log(body_chars) by class, QQ plot, Shapiro-Wilk on up to 5000 per class.
 train$log_body_chars <- log(train$body_chars)
 normal_summary <- do.call(rbind, lapply(classes, function(cl) {
@@ -86,6 +91,7 @@ normal_summary <- do.call(rbind, lapply(classes, function(cl) {
              skewness = moments::skewness(x), n_shapiro = length(s),
              W = unname(sw$statistic), p_value = sw$p.value)
 }))
+# @web-end
 qq_normal <- ggplot(train, aes(sample = .data$log_body_chars)) +
   stat_qq(size = 0.4, alpha = 0.3) +
   stat_qq_line(colour = "#c0392b") +
@@ -95,6 +101,7 @@ qq_normal <- ggplot(train, aes(sample = .data$log_body_chars)) +
   theme_minimal()
 fig_qq_normal <- save_fig("m4_qq_normal_log_body.png", qq_normal, width = 9)
 
+# @web-start Exponential inter-arrival times and KS test
 # Exponential: inter-arrival days of dated Nazario emails in the densest 365-day window.
 densest_window <- function(times, days = 365) {
   t <- sort(as.numeric(times)) / 86400
@@ -114,7 +121,7 @@ if (length(gaps) >= 30 && max(gaps) < 30) {
   qq_df <- data.frame(theoretical = stats::qexp(probs, rate), observed = sort(gaps))
   expo <- list(n_emails = length(window_days), n_gaps = length(gaps), rate_per_day = rate,
                mean_gap_days = mean(gaps), cv = stats::sd(gaps) / mean(gaps),
-               zero_gaps = mean(gaps < 1 / 1440),
+               zero_gaps = mean(gaps < 1 / 1440), gaps = gaps,
                window = format(as.POSIXct(range(window_days) * 86400, tz = "UTC"), "%Y-%m-%d"),
                ks = suppressWarnings(stats::ks.test(gaps, "pexp", rate)))
   qq_exp <- ggplot(qq_df, aes(x = .data$theoretical, y = .data$observed)) +
@@ -125,7 +132,9 @@ if (length(gaps) >= 30 && max(gaps) < 30) {
     theme_minimal()
   fig_qq_exp <- save_fig("m4_qq_exponential_nazario.png", qq_exp, width = 6)
 }
+# @web-end
 
+# @web-start Gamma vs Weibull vs lognormal with fitdistrplus
 # Gamma vs Weibull vs lognormal on body_chars (in thousands; scaling keeps AIC ranking).
 fit_candidates <- function(x) {
   fits <- lapply(c(gamma = "gamma", weibull = "weibull", lnorm = "lnorm"), function(d) {
@@ -139,7 +148,9 @@ fit_candidates <- function(x) {
   ok <- !vapply(fits, is.null, logical(1))
   data.frame(distribution = names(fits)[ok],
              aic = vapply(fits[ok], `[[`, numeric(1), "aic"),
-             bic = vapply(fits[ok], `[[`, numeric(1), "bic"))
+             bic = vapply(fits[ok], `[[`, numeric(1), "bic"),
+             param1 = vapply(fits[ok], function(f) unname(f$estimate[1]), numeric(1)),
+             param2 = vapply(fits[ok], function(f) unname(f$estimate[2]), numeric(1)))
 }
 fit_table <- do.call(rbind, lapply(classes, function(cl) {
   tab <- fit_candidates(train$body_chars[train$class == cl] / 1000)
@@ -147,6 +158,7 @@ fit_table <- do.call(rbind, lapply(classes, function(cl) {
   tab$winner <- tab$aic == min(tab$aic)
   tab
 }))
+# @web-end
 
 saveRDS(list(
   binomial = binom, binomial_summary = binom_summary, poisson = pois_summary,

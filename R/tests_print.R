@@ -43,6 +43,7 @@ z_p_value <- function(z, alternative) {
 
 cohens_h <- function(p1, p2) 2 * asin(sqrt(p1)) - 2 * asin(sqrt(p2))
 
+# @web-start Manual one-proportion Z formula
 # Z for one proportion: (p_hat minus p0) over the null standard error.
 z_one_prop <- function(x, n, p0, alternative = "two.sided", name = "one-proportion Z",
                        h0 = sprintf("p = %g", p0), h1 = NULL) {
@@ -52,7 +53,9 @@ z_one_prop <- function(x, n, p0, alternative = "two.sided", name = "one-proporti
   test_result(name, h0, h1, "z", z, z_critical(alternative), z_p_value(z, alternative),
               "Cohen's h", cohens_h(p_hat, p0))
 }
+# @web-end
 
+# @web-start Manual two-proportion Z formula
 # Z for two proportions with the pooled proportion in the standard error.
 z_two_prop <- function(x1, n1, x2, n2, alternative = "two.sided", name = "two-proportion Z",
                        h0 = "p1 = p2", h1 = NULL) {
@@ -64,6 +67,7 @@ z_two_prop <- function(x1, n1, x2, n2, alternative = "two.sided", name = "two-pr
   test_result(name, h0, h1, "z", z, z_critical(alternative), z_p_value(z, alternative),
               "Cohen's h", cohens_h(p1, p2))
 }
+# @web-end
 
 # z = (x_bar - mu0) / (s / sqrt(n)); effect d = (x_bar - mu0) / s
 z_one_mean <- function(x_bar, s, n, mu0, alternative = "two.sided", name = "one-mean Z",

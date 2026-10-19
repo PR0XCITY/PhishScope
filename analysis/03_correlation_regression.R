@@ -18,6 +18,7 @@ numeric_features <- c("n_urls", "urgency_count", "credential_count", "money_coun
 # Spearman matrix, and one pair by the rank-difference formula.
 spearman_mat <- stats::cor(train[numeric_features], method = "spearman")
 
+# @web-start Spearman by the rank-difference formula
 rank_difference_rho <- function(x, y) {
   d <- rank(x) - rank(y)
   n <- length(x)
@@ -26,7 +27,9 @@ rank_difference_rho <- function(x, y) {
 pair <- c("body_chars", "n_words")
 rho_formula <- rank_difference_rho(train[[pair[1]]], train[[pair[2]]])
 rho_cor <- spearman_mat[pair[1], pair[2]]
+# @web-end
 
+# @web-start Spearman of each feature with is_phish
 # Spearman of each feature with is_phish, phishing vs legitimate only.
 pl <- train[train$class %in% c("phishing", "legitimate"), ]
 pl$is_phish <- as.integer(pl$class == "phishing")
@@ -35,7 +38,9 @@ rho_phish <- sapply(all_features, function(f) {
   if (stats::sd(pl[[f]]) == 0) NA_real_ else stats::cor(pl[[f]], pl$is_phish, method = "spearman")
 })
 rho_phish <- sort(rho_phish, decreasing = TRUE)
+# @web-end
 
+# @web-start Partial correlation with ppcor
 # Partial correlation: urgency_count vs is_phish given body_chars and n_urls.
 controls <- pl[, c("body_chars", "n_urls")]
 partial <- rbind(
@@ -44,7 +49,9 @@ partial <- rbind(
 )
 zero_order <- c(pearson = stats::cor(pl$urgency_count, pl$is_phish),
                 spearman = stats::cor(pl$urgency_count, pl$is_phish, method = "spearman"))
+# @web-end
 
+# @web-start Linear probability model and logistic fit
 # Linear probability model and logistic comparison.
 pl$log_body_chars <- log(pl$body_chars)
 lpm_formula <- stats::reformulate(c(binary_features, "log_body_chars"), response = "is_phish")
@@ -53,6 +60,7 @@ lpm_sum <- summary(lpm)
 lpm_fit <- stats::fitted(lpm)
 out_of_range <- mean(lpm_fit < 0 | lpm_fit > 1)
 logit <- stats::glm(lpm_formula, data = pl, family = stats::binomial())
+# @web-end
 coef_table <- data.frame(
   term = names(stats::coef(lpm)),
   lpm_estimate = unname(stats::coef(lpm)),

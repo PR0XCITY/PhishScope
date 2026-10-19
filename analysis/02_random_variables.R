@@ -17,11 +17,13 @@ binary_features <- c("has_url", "ip_url", "shortener_url", "at_in_url", "has_urg
 numeric_features <- c("n_urls", "urgency_count", "credential_count", "money_count",
                       "exclam_count", "caps_ratio", "body_chars", "n_words")
 
+# @web-start PMF, CDF, E[X] and Var[X] of n_urls
 # X = n_urls: PMF, CDF (display capped at 10+), E[X], Var[X] on raw values.
 pmf_by_class <- do.call(rbind, lapply(classes, function(cl) {
   data.frame(class = cl, pmf_capped(train$n_urls[train$class == cl], cap = 10))
 }))
 moments_x <- t(sapply(classes, function(cl) rv_moments(train$n_urls[train$class == cl])))
+# @web-end
 
 x_breaks <- scale_x_continuous(breaks = 0:10, labels = c(0:9, "10+"))
 pmf_plot <- ggplot(pmf_by_class, aes(x = .data$k, y = .data$pmf, fill = .data$class)) +
@@ -38,12 +40,15 @@ cdf_plot <- ggplot(pmf_by_class, aes(x = .data$k, y = .data$cdf, colour = .data$
 ggsave(file.path(fig_dir, "m2_pmf_n_urls.png"), pmf_plot, width = 7, height = 4, dpi = 120)
 ggsave(file.path(fig_dir, "m2_cdf_n_urls.png"), cdf_plot, width = 7, height = 4, dpi = 120)
 
+# @web-start Joint PMF of has_url x has_urgency
 # Joint PMF of has_url x has_urgency within phishing and within legitimate.
 joint <- lapply(c(phishing = "phishing", legitimate = "legitimate"), function(cl) {
   d <- train[train$class == cl, ]
   joint_pmf(d$has_url, d$has_urgency, "has_url", "has_urgency")
 })
+# @web-end
 
+# @web-start Bayes P(phishing | feature) at sample and 1% prior
 # P(feature | class) and Bayes P(phishing | feature) at sample and 1% prevalence.
 is_phish <- train$class == "phishing"
 prior_sample <- mean(is_phish)
@@ -56,6 +61,7 @@ bayes <- data.frame(
 bayes$post_sample <- bayes_posterior(bayes$p_f_phish, bayes$p_f_not_phish, prior_sample)
 bayes$post_1pct <- bayes_posterior(bayes$p_f_phish, bayes$p_f_not_phish, 0.01)
 bayes$lift_1pct <- bayes$post_1pct / 0.01
+# @web-end
 cred <- bayes[bayes$feature == "has_credential", ]
 worked <- c(
   sample = bayes_worked(cred$p_f_phish, cred$p_f_not_phish, prior_sample,
@@ -65,10 +71,12 @@ worked <- c(
 # Sanity: Bayes at sample prevalence equals the direct conditional share.
 direct_cred <- mean(is_phish[train$has_credential == 1])
 
+# @web-start Covariance and correlation matrices
 # Covariance and correlation of numeric features.
 cov_mat <- stats::cov(train[numeric_features])
 cor_mat <- stats::cor(train[numeric_features])
 spearman_mat <- stats::cor(train[numeric_features], method = "spearman")
+# @web-end
 cor_long <- as.data.frame(as.table(cor_mat))
 heat <- ggplot(cor_long, aes(x = .data$Var1, y = .data$Var2, fill = .data$Freq)) +
   geom_tile() +
@@ -79,6 +87,7 @@ heat <- ggplot(cor_long, aes(x = .data$Var1, y = .data$Var2, fill = .data$Freq))
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ggsave(file.path(fig_dir, "m2_correlation_heatmap.png"), heat, width = 7, height = 6, dpi = 120)
 
+# @web-start MGF: empirical vs Poisson, moments from derivatives
 # MGF of X: empirical vs Poisson(lambda = mean), t in [0, 0.5]; moments from derivatives.
 t_grid <- seq(0, 0.5, by = 0.01)
 mgf_curves <- do.call(rbind, lapply(classes, function(cl) {
@@ -97,6 +106,7 @@ mgf_moment_tbl <- do.call(rbind, lapply(classes, function(cl) {
              direct_mean = mean(x), direct_var = rv_moments(x)[["var"]],
              poisson_var = poi[["var"]])
 }))
+# @web-end
 mgf_plot <- ggplot(mgf_curves, aes(x = .data$t, y = .data$log_m, linetype = .data$model)) +
   geom_line() +
   facet_wrap(~class, scales = "free_y") +

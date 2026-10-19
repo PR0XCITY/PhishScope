@@ -21,6 +21,7 @@ pooled_d <- function(x, y) {
   (mean(x) - mean(y)) / sp
 }
 
+# @web-start Small samples: t and F tests, 500 repeated draws
 # ---- Small samples: n = 20 per class, log(body_chars) ----
 small_tests <- function(n = 20) {
   x <- sample(train$log_body[train$class == "phishing"], n)
@@ -45,6 +46,7 @@ small_tests <- function(n = 20) {
 first_draw <- small_tests()
 reps <- replicate(500, vapply(small_tests(), function(r) r$p_value < 0.05, logical(1)))
 rejection_rate <- rowMeans(reps)
+# @web-end
 
 # ---- Chi-square GOF: n_urls in legitimate vs Poisson, pooling expected < 5 ----
 pool_tail <- function(obs, expd) {
@@ -75,6 +77,7 @@ gof_poisson <- function(x) {
 }
 gof <- gof_poisson(train$n_urls[train$class == "legitimate"])
 
+# @web-start Chi-square independence, Cramer's V, odds ratio, Holm
 # ---- Chi-square independence: binary feature x class ----
 odds_ratio_ci <- function(a, b, c, d) {
   if (min(a, b, c, d) == 0) {
@@ -105,6 +108,7 @@ indep$p_holm <- stats::p.adjust(indep$p_value, method = "holm")
 indep$decision <- ifelse(indep$p_holm < 0.05, "reject H0", "fail to reject H0")
 indep$passes <- indep$p_holm < 0.05 & indep$cramers_v >= 0.1
 indep <- indep[order(-indep$cramers_v), ]
+# @web-end
 effect_note <- paste("With about 57k emails almost any difference is significant;",
                      "Cramer's V and the odds ratio show which ones matter.")
 
@@ -122,6 +126,7 @@ anova_terms <- function(fit, label, response = "log(body_chars)") {
                    "partial eta^2", tab[term, "Sum Sq"] / (tab[term, "Sum Sq"] + ss_res))
   })
 }
+# @web-start One-, two- and three-way ANOVA, Levene
 one_way <- stats::aov(log_body ~ class, data = train)
 multi_sources <- names(which(tapply(train$class, train$source, function(x) {
   length(unique(x))
@@ -132,6 +137,7 @@ three_way <- stats::aov(log_body ~ class * source * has_html, data = multi)
 anova_results <- c(anova_terms(one_way, "One-way"), anova_terms(two_way, "Two-way"),
                    anova_terms(three_way, "Three-way"))
 levene <- car::leveneTest(log_body ~ factor(class), data = train)
+# @web-end
 sd_by_class <- tapply(train$log_body, train$class, stats::sd)
 levene_res <- tp$test_result("Levene, log(body_chars) by class", "equal variances",
                              "some variances differ", "F", levene[1, "F value"],
@@ -147,13 +153,18 @@ qq <- ggplot(data.frame(r = resid), aes(sample = .data$r)) +
   labs(x = "normal quantile", y = "residual", title = "One-way ANOVA residuals, QQ plot") +
   theme_minimal()
 ggsave("outputs/figures/m6_anova_residual_qq.png", qq, width = 6, height = 4, dpi = 120)
+# @web-start Tukey HSD
 tukey <- as.data.frame(stats::TukeyHSD(one_way)$class)
+# @web-end
 
+# @web-start Randomized block design
 # ---- DOE layouts on observational data ----
 rbd_data <- stats::aggregate(caps_ratio ~ class + source, data = multi, FUN = mean)
 rbd_fit <- stats::aov(caps_ratio ~ class + source, data = rbd_data)
 rbd_results <- anova_terms(rbd_fit, "RBD", "caps_ratio")
+# @web-end
 
+# @web-start Latin square design (3 x 3)
 # All 12 Latin squares of order 3: class permutations over the two cyclic patterns.
 latin_candidates <- function(classes) {
   perms <- list(c(1, 2, 3), c(1, 3, 2), c(2, 1, 3), c(2, 3, 1), c(3, 1, 2), c(3, 2, 1))
@@ -186,6 +197,7 @@ latin_square <- function(min_n = 30) {
 lsd_data <- latin_square()
 lsd_fit <- stats::aov(exclam ~ row + col + class, data = lsd_data)
 lsd_results <- anova_terms(lsd_fit, "LSD", "exclam_count")
+# @web-end
 doe_note <- paste("Observational data arranged in DOE layouts: classes were not randomly",
                   "assigned, so effects are associations, not causal treatment effects.",
                   "CRD = the one-way ANOVA above.")

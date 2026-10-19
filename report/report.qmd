@@ -260,7 +260,7 @@ sensitivity. Trained without Nigerian Fraud, sensitivity on that corpus falls fr
 # Web demo
 
 A static page (`web/`) runs the same feature extraction and PhishScore in the browser from
-`web/model.json`. It shows the score at the dataset prior and at a 1% prior, a red-flag table
+`web/public/model.json`. It shows the score at the dataset prior and at a 1% prior, a red-flag table
 with likelihood ratios and the matched words. Nothing is sent to a server, and a parity test
 checks that the JavaScript features and scores match R to six decimals.
 

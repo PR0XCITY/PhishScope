@@ -1,5 +1,6 @@
 # PhishScore: Bernoulli naive Bayes, phishing vs legitimate, with a caller-supplied prior.
 
+# @web-start Laplace-smoothed naive Bayes and posterior
 # Laplace-smoothed P(f = 1 | class) = (count + 1) / (n + 2).
 fit_phishscore <- function(df, features, class_col = "class") {
   ph <- df[[class_col]] == "phishing"
@@ -19,6 +20,7 @@ phishscore_posterior <- function(model, x, prior = model$prior) {
   log_odds <- log(prior / (1 - prior)) + as.vector(x %*% w1 + (1 - x) %*% w0)
   1 / (1 + exp(-log_odds))
 }
+# @web-end
 
 model_from_json <- function(path) {
   m <- jsonlite::read_json(path, simplifyVector = TRUE)
@@ -55,6 +57,7 @@ classification_metrics <- function(truth, pred) {
   )
 }
 
+# @web-start AUC (Mann-Whitney) and ROC points
 # AUC by the Mann-Whitney rank formula (ties count one half).
 auc_rank <- function(score, truth) {
   r <- rank(score)
@@ -69,3 +72,4 @@ roc_points <- function(score, truth) {
              tpr = vapply(thr, function(t) mean(score[truth] >= t), numeric(1)),
              fpr = vapply(thr, function(t) mean(score[!truth] >= t), numeric(1)))
 }
+# @web-end

@@ -23,6 +23,7 @@ escape_regex <- function(x) {
   stringi::stri_replace_all_regex(x, "[.*+?^${}()|\\[\\]\\\\]", "\\\\$0")
 }
 
+# @web-start Whole-word lexicon matching
 # Whole word or phrase: no [a-z0-9_] on either side; spaces match any whitespace run.
 term_pattern <- function(term) {
   body <- stringi::stri_replace_all_fixed(escape_regex(term), " ", paste0(ws_chars, "+"))
@@ -34,6 +35,7 @@ count_terms <- function(lower, terms) {
                    numeric(length(lower)))
   as.integer(rowSums(matrix(counts, nrow = length(lower))))
 }
+# @web-end
 
 trim_url <- function(urls) {
   stringi::stri_replace_first_regex(urls, "[.,;:!?)\\]]+$", "")
@@ -70,6 +72,7 @@ url_features <- function(lower, shorteners) {
   )
 }
 
+# @web-start Uppercase ratio
 # Uppercase share of letters inside words of 2+ ASCII letters; 0 if there are none.
 caps_ratio <- function(text) {
   words <- stringi::stri_extract_all_regex(text, "[A-Za-z]{2,}", omit_no_match = TRUE)
@@ -78,6 +81,7 @@ caps_ratio <- function(text) {
   upper <- stringi::stri_count_regex(letters_only, "[A-Z]")
   ifelse(total > 0, upper / pmax(total, 1), 0)
 }
+# @web-end
 
 extract_features <- function(subject, body, lexicon = load_lexicon()) {
   subject[is.na(subject)] <- ""

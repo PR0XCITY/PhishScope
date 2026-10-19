@@ -50,16 +50,19 @@ parse_dates <- function(x) {
   suppressWarnings(lubridate::parse_date_time(x, orders = orders, tz = "UTC", quiet = TRUE))
 }
 
+# @web-start Class mapping
 assign_class <- function(label, source) {
   ifelse(label == 0, "legitimate",
          ifelse(source %in% phishing_sources, "phishing", "spam"))
 }
+# @web-end
 
 normalize_text <- function(x) {
   x <- stringi::stri_trans_tolower(x)
   stringi::stri_trim_both(stringi::stri_replace_all_regex(x, "\\s+", " "))
 }
 
+# @web-start Drop empty bodies and normalized duplicates
 # Drop empty bodies, then exact duplicates on normalized subject + body.
 clean_emails <- function(df) {
   empty <- stringi::stri_trim_both(df$body) == ""
@@ -72,6 +75,7 @@ clean_emails <- function(df) {
   attr(out, "dropped") <- c(empty_body = sum(empty), duplicate = sum(dup))
   out
 }
+# @web-end
 
 log_date_rates <- function(df) {
   rate <- tapply(!is.na(df$date), df$source, mean)

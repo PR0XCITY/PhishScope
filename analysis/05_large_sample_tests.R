@@ -13,6 +13,7 @@ legit <- train[train$class == "legitimate", ]
 results <- list()
 checks <- list()
 
+# @web-start One-proportion Z test
 # Single proportion: share of phishing with at least one URL.
 x_url <- sum(phish$n_urls >= 1)
 results$url_share <- tp$z_one_prop(
@@ -22,7 +23,9 @@ results$url_share <- tp$z_one_prop(
 pt <- stats::prop.test(x_url, nrow(phish), 0.5, alternative = "greater", correct = FALSE)
 checks$url_share <- c(manual = results$url_share$statistic^2,
                       builtin = unname(pt$statistic), builtin_p = pt$p.value)
+# @web-end
 
+# @web-start Two-proportion Z, cross-checked with prop.test
 # Difference of proportions, phishing vs legitimate.
 for (f in c("has_url", "has_urgency", "has_credential", "generic_greeting")) {
   x1 <- sum(phish[[f]])
@@ -36,6 +39,7 @@ for (f in c("has_url", "has_urgency", "has_credential", "generic_greeting")) {
   checks[[f]] <- c(manual = results[[f]]$statistic^2,
                    builtin = unname(pt$statistic), builtin_p = pt$p.value)
 }
+# @web-end
 
 # Single mean: phishing caps_ratio against the legitimate mean as the reference value.
 mu_ref <- mean(legit$caps_ratio)
@@ -45,6 +49,7 @@ results$caps_ratio <- tp$z_one_mean(
   h0 = sprintf("mu_phish = %.4f", mu_ref), h1 = sprintf("mu_phish != %.4f", mu_ref)
 )
 
+# @web-start Difference of means, cross-checked with t.test
 # Difference of means, phishing vs legitimate.
 two_mean <- function(x, y, label) {
   res <- tp$z_two_mean(mean(x), stats::sd(x), length(x), mean(y), stats::sd(y), length(y),
@@ -61,13 +66,16 @@ for (k in names(tm)) {
   results[[k]] <- tm[[k]]$res
   checks[[k]] <- tm[[k]]$check
 }
+# @web-end
 
+# @web-start Power with power.prop.test
 # Power for the has_urgency difference.
 p_ph <- mean(phish$has_urgency)
 p_lg <- mean(legit$has_urgency)
 power_at_n <- stats::power.prop.test(n = nrow(phish), p1 = p_ph, p2 = p_lg)$power
 n_for_80 <- stats::power.prop.test(p1 = p_ph, p2 = p_lg, power = 0.8)$n
 small_effect_n <- stats::power.prop.test(p1 = p_lg + 0.01, p2 = p_lg, power = 0.8)$n
+# @web-end
 error_note <- paste(
   "A Type I error is a false alarm: declaring that a feature separates phishing from",
   "legitimate mail when it does not, held at alpha = 0.05.",

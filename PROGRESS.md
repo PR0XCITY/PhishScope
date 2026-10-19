@@ -64,3 +64,10 @@
 - Added rmarkdown + knitr to renv. Quarto 1.10.19 installed portable (winget had no user-scope installer).
 - Checks: R tests, 29 node tests, lintr clean, renv consistent; gitleaks detect clean; 0 of 58616 dataset body snippets found in tracked files; web demo scores both examples.
 - Open: README live demo URL and screenshot are placeholders (no git remote yet).
+
+## Phase 6A: R exports JSON for the website (done)
+- Files: R/export_web.R (extract_web_blocks, clean_console, format_p, strip_em_dash, cap_points, web_series, web_chart, web_table, web_test, check_module_json, write_web_json), analysis/08_export_web.R (build_m0..build_m8, build_pipeline, build_meta), tests/testthat/test-export.R. `Rscript run.R web` wired.
+- Markers: 3 to 6 `# @web-start/end` blocks in analysis/00-07 plus R/load.R, features.R, rv.R, tests_print.R, phishscore.R, reliability.R. Logic unchanged; 04 now also saves fit params (param1/2) and exponential gaps.
+- Output web/public/data: m0-m8.json, pipeline.json, meta.json (R 4.6.1, package versions, headline, module summaries). 0.24 MB; consoles capped at 400 lines, guard fails on lines > 300 chars; points <= 500 per series.
+- Frontend rule change (user): web/ is Vite + React + TS + Tailwind; model.json moved to web/public/model.json (07 and make_expected.R updated).
+- Fix found in export: strip_em_dash turned data frames into column lists; now keeps rows, with a test.

@@ -1,10 +1,11 @@
-# Entry point: Rscript run.R <data | analysis | report | all>
+# Entry point: Rscript run.R <data | analysis | report | web | all>
 
 usage <- function() {
   cat("Usage: Rscript run.R <stage>\n")
   cat("  data      build data/processed from data/raw\n")
   cat("  analysis  run analysis/ module scripts -> outputs/results\n")
   cat("  report    render report/report.qmd\n")
+  cat("  web       rerun modules and export JSON to web/public/data\n")
   cat("  all       data, analysis, report in order\n")
 }
 
@@ -17,7 +18,7 @@ run_data <- function() {
   run_script("analysis/00_data.R")
 }
 
-# Modules 1-7 in order (07 writes web/model.json), then the JS parity fixtures.
+# Modules 1-7 in order (07 writes web/public/model.json), then the JS parity fixtures.
 run_analysis <- function() {
   scripts <- sort(list.files("analysis", pattern = "^0[1-7]_.*[.]R$", full.names = TRUE))
   for (s in scripts) run_script(s)
@@ -30,6 +31,11 @@ quarto_bin <- function() {
   found <- candidates[nzchar(candidates) & file.exists(candidates)]
   if (length(found) == 0) stop("Quarto not found; install it or set QUARTO_PATH.")
   found[[1]]
+}
+
+# Reruns analysis/00-07 for their console output and writes web/public/data/*.json.
+run_web <- function() {
+  run_script("analysis/08_export_web.R")
 }
 
 # Renders HTML and PDF (typst) as set in the report's YAML header.
@@ -45,6 +51,7 @@ main <- function(args) {
     data = run_data(),
     analysis = run_analysis(),
     report = run_report(),
+    web = run_web(),
     all = {
       run_data()
       run_analysis()

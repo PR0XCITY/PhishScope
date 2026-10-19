@@ -1,4 +1,4 @@
-# PhishScore model (train -> test) and Module 7 reliability; exports web/model.json.
+# PhishScore model (train -> test) and Module 7 reliability; exports web/public/model.json.
 
 library(ggplot2)
 source("R/phishscore.R")
@@ -17,14 +17,18 @@ test <- pl[pl$set == "test", ]
 m6 <- readRDS("outputs/results/m6.rds")
 features <- m6$independence$feature[m6$independence$passes]
 
+# @web-start Naive Bayes fit and test-set evaluation
 # ---- Fit on train, evaluate on test at threshold 0.5 ----
 threshold <- 0.5
 model <- fit_phishscore(train, features)
 truth <- test$class == "phishing"
 score <- phishscore_posterior(model, test)
 eval_main <- classification_metrics(truth, score >= threshold)
+# @web-end
+# @web-start ROC curve and AUC
 auc <- auc_rank(score, truth)
 roc <- roc_points(score, truth)
+# @web-end
 roc_plot <- ggplot(roc, aes(x = .data$fpr, y = .data$tpr)) +
   geom_step(direction = "vh", colour = "#3b6fb6", linewidth = 0.8) +
   geom_abline(linetype = "dashed", colour = "grey60") +
@@ -45,6 +49,7 @@ eval_prior1 <- classification_metrics(truth, phishscore_posterior(model, test, 0
 precision_1pct_prior <- precision_at(eval_prior1$metrics["sensitivity", "estimate"],
                                      eval_prior1$metrics["specificity", "estimate"], 0.01)
 
+# @web-start Cross-corpus refit without Nigerian Fraud
 # ---- Cross-corpus: refit without Nigerian Fraud, test on Nigerian Fraud vs test legitimate ----
 nf_test <- test[test$source == "Nigerian_Fraud" | test$class == "legitimate", ]
 nf_truth <- nf_test$class == "phishing"
@@ -63,7 +68,9 @@ cross <- data.frame(
           auc_rank(phishscore_posterior(cross_model, nf_test), nf_truth))
 )
 sens_drop <- cross$sensitivity[1] - cross$sensitivity[2]
+# @web-end
 
+# @web-start Rules as series and parallel components
 # ---- Module 7: each selected rule as a component ----
 rule_rates <- data.frame(
   rule = features,
@@ -79,6 +86,8 @@ system_rates <- data.frame(
   false_alarm_empirical = c(mean(apply(fires[!truth, ], 1, any)),
                             mean(apply(fires[!truth, ], 1, all)))
 )
+# @web-end
+# @web-start Pairwise rule dependence (chi-square)
 
 # Pairwise rule dependence within each class (chi-square, phi).
 rule_dependence <- function(rows, label) {
@@ -95,7 +104,9 @@ rule_dependence <- function(rows, label) {
 }
 dependence <- rbind(rule_dependence(truth, "phishing"), rule_dependence(!truth, "legitimate"))
 dependence$p_holm <- stats::p.adjust(dependence$p_value, method = "holm")
+# @web-end
 
+# @web-start User-level reliability and MTTF
 # User level: pi = 1%, miss rate m = 1 - sensitivity, hazard h = pi * m.
 pi_phish <- 0.01
 miss <- 1 - m_main["sensitivity", "estimate"]
@@ -111,6 +122,7 @@ ggsave("outputs/figures/m7_user_reliability.png", user_plot, width = 6, height =
 user_level <- c(pi = pi_phish, miss_rate = miss, hazard = hazard,
                 r_100 = user_reliability(100, hazard), r_1000 = user_reliability(1000, hazard),
                 mttf_emails = mttf_emails(hazard), mttf_days = mttf_emails(hazard) / 50)
+# @web-end
 
 # Maintainability and availability (assumption-based scenario).
 avail <- c(mtbf_days = 90, mttr_days = 2, availability = availability(90, 2))
@@ -118,8 +130,8 @@ avail_note <- paste("Assumption-based: lexicon and likelihoods refreshed every 9
                     "2 days degraded per refresh; drift size taken from the cross-corpus",
                     sprintf("sensitivity drop of %.3f.", sens_drop))
 
-# ---- Export web/model.json (no email text) ----
-dir.create("web", showWarnings = FALSE)
+# ---- Export web/public/model.json (no email text) ----
+dir.create("web/public", showWarnings = FALSE, recursive = TRUE)
 likelihoods <- lapply(stats::setNames(features, features), function(f) {
   list(phishing = unname(model$p_phish[f]), legitimate = unname(model$p_legit[f]))
 })
@@ -130,7 +142,7 @@ jsonlite::write_json(
        threshold = threshold, smoothing = "Laplace (count + 1) / (n + 2)",
        n_train = list(phishing = model$n_phish, legitimate = model$n_legit),
        citation = "Al-Subaiey et al. 2024, arXiv 2405.11619"),
-  "web/model.json", auto_unbox = TRUE, digits = NA, pretty = TRUE
+  "web/public/model.json", auto_unbox = TRUE, digits = NA, pretty = TRUE
 )
 
 headline <- list(

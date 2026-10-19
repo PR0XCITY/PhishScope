@@ -8,15 +8,21 @@ fig_dir <- "outputs/figures"
 dir.create(fig_dir, showWarnings = FALSE, recursive = TRUE)
 dir.create("outputs/results", showWarnings = FALSE, recursive = TRUE)
 
+# @web-start Training set only
 emails <- arrow::read_parquet("data/processed/emails.parquet")
 train <- as.data.frame(emails[emails$set == "train", ])
 features <- c("body_chars", "n_urls", "caps_ratio", "exclam_count")
+# @web-end
 
+# @web-start Summary statistics for every feature x class
 stats_tbl <- describe_by_class(train, features)
+# @web-end
+# @web-start Choose log scale from skewness
 # Log scale only for skewed features with a wide range (caps_ratio stays linear in [0, 1]).
 is_skewed <- vapply(features, function(f) {
   min(stats_tbl$skewness[stats_tbl$feature == f]) > 1 && max(train[[f]]) > 10
 }, logical(1))
+# @web-end
 
 interpret <- function(f) {
   s <- stats_tbl[stats_tbl$feature == f, ]

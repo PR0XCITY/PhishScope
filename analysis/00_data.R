@@ -5,11 +5,17 @@ source("R/features.R")
 source("R/split.R")
 
 set.seed(2026)
+# @web-start Load, harmonize and deduplicate the six corpora
 emails <- load_emails("data/raw")
+# @web-end
+# @web-start Extract 18 features from subject and body
 feats <- extract_features(emails$subject, emails$body, load_lexicon("config/features.yml"))
+# @web-end
+# @web-start Stratified 70/30 split by class x source
 meta <- data.frame(id = emails$id, class = emails$class, source = emails$source,
                    date = emails$date)
 processed <- split_train_test(cbind(meta, feats), prop = 0.7, seed = 2026)
+# @web-end
 
 dir.create("data/processed", showWarnings = FALSE, recursive = TRUE)
 arrow::write_parquet(processed, "data/processed/emails.parquet")
