@@ -9,7 +9,7 @@ usage <- function() {
 }
 
 run_data <- function() {
-  message("data: not implemented yet")
+  source("analysis/00_data.R")
 }
 
 run_analysis <- function() {
