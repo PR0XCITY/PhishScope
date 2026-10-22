@@ -1,7 +1,7 @@
-import { ArrowRight, FlaskConical, ScanSearch } from "lucide-react";
+import { FlaskConical, ScanSearch } from "lucide-react";
 import { Link } from "react-router";
 import { CountUp } from "../components/CountUp";
-import { ErrorState, Skeleton, Tag } from "../components/ui";
+import { ErrorState, Skeleton } from "../components/ui";
 import { useMeta, usePipeline, type Meta, type Pipeline } from "../lib/data";
 import { formatPercent } from "../lib/text";
 
@@ -50,32 +50,6 @@ function Stats({ meta, pipeline }: { meta: Meta; pipeline: Pipeline }) {
         detail="most alerts are false alarms"
       />
     </div>
-  );
-}
-
-function ModuleGrid({ meta }: { meta: Meta }) {
-  const modules = meta.modules.filter((m) => m.id >= 1 && m.id <= 7);
-  return (
-    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {modules.map((m) => (
-        <li key={m.id}>
-          <Link
-            to={"/analysis/" + m.id}
-            className="card group flex h-full flex-col p-5 transition-colors duration-150 hover:border-focus/50"
-          >
-            <div className="flex items-center justify-between">
-              <Tag>{m.syllabus_module}</Tag>
-              <ArrowRight
-                aria-hidden="true"
-                className="size-4 text-muted transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-focus"
-              />
-            </div>
-            <h3 className="mt-3 font-semibold">{m.title}</h3>
-            <p className="mt-2 line-clamp-4 text-sm text-muted">{m.takeaway}</p>
-          </Link>
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -129,26 +103,6 @@ export default function Home() {
             ))}
           </div>
         )}
-      </section>
-
-      <section aria-labelledby="modules-title">
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <h2 id="modules-title" className="text-xl font-semibold tracking-tight">
-            Seven modules, one question each
-          </h2>
-          <Link to="/pipeline" className="text-sm text-focus underline-offset-4 hover:underline">
-            See the pipeline
-          </Link>
-        </div>
-        {meta.status === "ready" ? (
-          <ModuleGrid meta={meta.data} />
-        ) : meta.status === "loading" ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton key={i} className="h-40" />
-            ))}
-          </div>
-        ) : null}
       </section>
     </div>
   );
